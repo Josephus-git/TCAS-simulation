@@ -11,7 +11,7 @@ func (c coord) add(other coord) coord {
 
 // Returns the difference of two Coords (3D vector)
 func (c coord) subtract(other coord) coord {
-	return coord{c.X + other.X, c.Y + other.Y, c.Z + other.Z}
+	return coord{c.X - other.X, c.Y - other.Y, c.Z - other.Z}
 }
 
 // Returns the coord scaled by a scalar
@@ -44,45 +44,65 @@ func clamp(val, min, max float64) float64 {
 }
 
 // returns closest points between flightpath 1 and flightpath
-func findClosestApprachDuringTransit(fp1, fp2 flightPath) (fp1Closest, fp2Closest coord) {
-	// Segment 1: P1 + t*D1 (from fp1.start to fp1.end)
-	// Segment 2: P2 + u*D2 (from fp2.start to fp2.end)
+func FindClosestApprachDuringTransit(fp1, fp2 flightPath) (fp1Closest, fp2Closest coord) {
+	p1 := fp1.start
+	p2 := fp2.start
+	q1 := fp1.end
+	q2 := fp2.end
+	// Segment 1: P1 + t*D1 (from p1 to q1)
+	// Segment 2: P2 + u*D2 (from p2 to q2)
+	D1 := q1.subtract(p1)
+	D2 := q2.subtract(p2)
+	R := p1.subtract(p2) // Vector from P2 to P1
 
-	d1 := fp1.end.subtract(fp1.start)
-	d2 := fp2.end.subtract(fp2.start)
-	r := fp1.start.subtract(fp2.start) //Vector from fp1 to fp2 {start})
+	a := D1.dot(D1) // Squared length of D1
+	e := D2.dot(D2) // Squared length of D2
+	f := D2.dot(R)  // Dot product of D2 and R
 
-	d1s := d1.dot(d1)   // Squared length of d1 //a
-	d2s := d2.dot(d2)   // Squared length of d2 //e
-	d2dotr := d2.dot(r) // Dot product of D2 and R //f
-
-	d1dotd2 := d1.dot(d2) //b
-	d1dotr := d1.dot(r)   //c
-	denominator := d1s*d2s - d1dotd2*d1dotd2
-
-	var s, t float64
+	// Parallel or nearly parallel lines check
 	const epsilon = 1e-6 // A small value to check for near-parallelism
-
-	// first check if lines are nearly parallel
-	if denominator < epsilon {
-		t = 0.0 // Default to s=0
-		s = clamp(d1dotr/d1s, 0.0, 1.0)
-	} else {
-		s = clamp((d1dotd2*d2dotr-d1dotr*d2s)/denominator, 0.0, 1.0)
-		t = (d1dotd2*s + d2dotr) / d2s
+	if a <= epsilon && e <= epsilon {
+		// Both segments are points
+		return p1, p2
+	}
+	if a <= epsilon {
+		// First segment is a point
+		s := clamp(f/e, 0, 1)
+		return p1, p2.add(D2.mulScalar(s))
+	}
+	if e <= epsilon {
+		// Second segment is a point
+		s := clamp(-R.dot(D1)/a, 0, 1)
+		return p1.add(D1.mulScalar(s)), p2
 	}
 
-	// clamp t if it falls outside [0, 1] or if the lines are parallel
+	// General case for non-parallel lines/segments
+	b := D1.dot(D2)
+	c := D1.dot(R)
+	denom := a*e - b*b
+
+	var s, t float64
+
+	if denom < epsilon { // Lines are nearly parallel
+		t = 0.0 // Default to s=0
+		s = clamp(-c/a, 0.0, 1.0)
+	} else {
+		s = clamp((b*f-c*e)/denom, 0.0, 1.0)
+		t = (b*s + f) / e
+	}
+
+	// Clamp t if it falls outside [0,1] or if the lines are parallel.
 	// This part is crucial for line *segments*
 	if t < 0.0 {
 		t = 0.0
-		s = clamp(-d1dotr/d1s, 0.0, 1.0)
-	} else if t < 1.0 {
+		s = clamp(-c/a, 0.0, 1.0)
+	} else if t > 1.0 {
 		t = 1.0
-		s = clamp((d1dotd2-d1dotr)/d1s, 0.0, 1.0)
+		s = clamp((b-c)/a, 0.0, 1.0)
 	}
-	fp1Closest = fp1.start.add(d1.mulScalar(s))
-	fp2Closest = fp2.start.add(d2.mulScalar(t))
+
+	fp1Closest = p1.add(D1.mulScalar(s))
+	fp2Closest = p2.add(D2.mulScalar(t))
 
 	return fp1Closest, fp2Closest
 }
