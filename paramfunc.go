@@ -6,24 +6,24 @@ import (
 )
 
 // Get planes position
-func getPlanePosition(f Flight, t time.Time) (Coord, error) {
-	if t.Before(f.TakeoffTime) || t.After(f.LandingTime) { //*** return here to check incase plane shold go on another flight
-		return Coord{}, fmt.Errorf("time %v is outside flight %s duration", t, f.FlightID)
+func (p plane) getPlanePosition(f flight, t time.Time) (coord, error) {
+	if t.Before(f.takeoffTime) || t.After(f.landingTime) { //*** return here to check incase plane shold go on another flight
+		return coord{}, fmt.Errorf("time %v is outside flight %s duration", t, f.flightID)
 	}
 
 	// Calculate fraction of flight completed (normalized time 0-1)
-	totalDuration := f.LandingTime.Sub(f.TakeoffTime)
-	elapsed := t.Sub(f.TakeoffTime)
+	totalDuration := f.landingTime.Sub(f.takeoffTime)
+	elapsed := t.Sub(f.takeoffTime)
 	progress := float64(elapsed) / float64(totalDuration)
 
 	// get the arival and departure location
-	departureLocation := f.Departure.Location
-	arivalLocation := f.Arrival.Location
+	departureLocation := f.departure.location
+	arivalLocation := f.arrival.location
 
 	// Calculate the intermediate point
 	pX := departureLocation.X + (departureLocation.X-arivalLocation.X)*progress
 	pY := departureLocation.Y + (departureLocation.Y-arivalLocation.Y)*progress
-	pZ := f.CruisingAltitude
+	pZ := f.cruisingAltitude
 
-	return Coord{X: pX, Y: pY, Z: pZ}, nil
+	return coord{X: pX, Y: pY, Z: pZ}, nil
 }
