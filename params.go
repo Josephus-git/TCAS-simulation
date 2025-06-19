@@ -25,7 +25,8 @@ type runway struct {
 type plane struct {
 	serial        string
 	planeInFlight bool
-	speed         float64
+	cruiseSpeed   float64
+	flightLog     []flight
 	location      planeLocation
 }
 
@@ -33,11 +34,16 @@ type plane struct {
 // *** implement the climb / decent
 type flight struct {
 	flightID         string // inthe format {fromairport/toairport/index in digit}
-	departure        airport
-	arrival          airport
+	flightSchedule   flightPath
 	takeoffTime      time.Time
 	landingTime      time.Time
 	cruisingAltitude float64 // Meters
+}
+
+// Flight path to store the movement of plane from one location to the other
+type flightPath struct {
+	depature coord
+	arrival  coord
 }
 
 // PlaneState represents the position and time of a plane
@@ -53,3 +59,6 @@ type coincidenceResult struct {
 	closestTime time.Time
 	minDistance float64
 }
+
+// constant to keep track of takeoff/landing time
+const takeofforLandingTime = 5

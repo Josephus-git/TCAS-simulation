@@ -17,8 +17,8 @@ func (p plane) getPlanePosition(f flight, t time.Time) (coord, error) {
 	progress := float64(elapsed) / float64(totalDuration)
 
 	// get the arival and departure location
-	departureLocation := f.departure.location
-	arivalLocation := f.arrival.location
+	departureLocation := f.flightSchedule.depature
+	arivalLocation := f.flightSchedule.arrival
 
 	// Calculate the intermediate point
 	pX := departureLocation.X + (departureLocation.X-arivalLocation.X)*progress

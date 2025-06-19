@@ -4,6 +4,8 @@ import (
 	"math"
 )
 
+// All functions here are just to implement the finding of closest approach between flight paths
+
 // Returns the sum of two Coords (3D vector)
 func (c coord) add(other coord) coord {
 	return coord{c.X + other.X, c.Y + other.Y, c.Z + other.Z}
@@ -24,20 +26,6 @@ func (c coord) dot(other coord) float64 {
 	return (c.X * other.X) + (c.Y * other.Y) + (c.Z * other.Z)
 }
 
-// Returns the cross product of two coord
-func (c coord) cross(other coord) coord {
-	return coord{
-		c.Y*other.Z - c.Z*other.Y,
-		c.Z*other.X - c.X*other.Z,
-		c.X*other.Y - c.Y*other.X,
-	}
-}
-
-// Return the magnitude (length) of the vector
-func (c coord) magnitude() float64 {
-	return math.Sqrt(math.Pow(c.X, 2) + math.Pow(c.Y, 2) + math.Pow(c.Z, 2))
-}
-
 // limits a value to a specific range, ensuring it falls within a minimum and maximum boundary
 func clamp(val, min, max float64) float64 {
 	return math.Max(min, math.Min(val, max))
@@ -45,10 +33,10 @@ func clamp(val, min, max float64) float64 {
 
 // returns closest points between flightpath 1 and flightpath
 func FindClosestApprachDuringTransit(fp1, fp2 flightPath) (fp1Closest, fp2Closest coord) {
-	p1 := fp1.start
-	p2 := fp2.start
-	q1 := fp1.end
-	q2 := fp2.end
+	p1 := fp1.depature
+	p2 := fp2.depature
+	q1 := fp1.arrival
+	q2 := fp2.arrival
 	// Segment 1: P1 + t*D1 (from p1 to q1)
 	// Segment 2: P2 + u*D2 (from p2 to q2)
 	D1 := q1.subtract(p1)
