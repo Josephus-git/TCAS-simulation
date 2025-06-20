@@ -1,33 +1,27 @@
 package main
 
 import (
-	"fmt"
-	"time"
+	"os"
 )
 
 func main() {
-	start()
+	// reset all log files
+	resetLog()
+	startR()
 }
 
-func start() {
-	baseTime := time.Date(2025, time.June, 19, 10, 0, 0, 0, time.UTC)
-
-	flight1 := flight{
-		flightSchedule: flightPath{depature: coord{-10, -10, 0}, arrival: coord{10, 10, 10}},
-		takeoffTime:    baseTime,
-		landingTime:    baseTime.Add(20 * time.Minute),
-	}
-	flight2 := flight{
-		flightSchedule: flightPath{depature: coord{-5, 5, 5}, arrival: coord{5, -5, -5}},
-		takeoffTime:    baseTime,
-		landingTime:    baseTime.Add(10 * time.Minute),
+func resetLog() {
+	filesToDelete := []string{
+		"airportDetails.txt",
+		"airPlaneDetails.txt",
+		"flightDetails.txt",
 	}
 
-	//expectedF1ClosestTime := baseTime // (0/100) * 10min = 0min, so takeoff time
-	//expectedF2ClosestTime := baseTime // (0/100) * 10min = 0min, so takeoff time
-	//expectedDistanceBetweenPlanesCA := 5.0
-
-	closestTime, distanceBetweenPlanesatCA := flight1.GetClosestApproachDetails(flight2)
-	fmt.Println(closestTime)
-	fmt.Println(distanceBetweenPlanesatCA)
+	for _, filePath := range filesToDelete {
+		_, err := os.Stat(filePath)
+		if os.IsNotExist(err) {
+			continue
+		}
+		os.Remove(filePath)
+	}
 }

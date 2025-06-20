@@ -5,6 +5,7 @@ import (
 )
 
 // Point represents a 3D coordinate
+// may be changed to latitude logitude altitude
 type coord struct {
 	X, Y, Z float64
 }
@@ -15,6 +16,7 @@ type airport struct {
 	location      coord
 	planeCapacity int
 	runway        runway
+	planes        []plane
 }
 
 type runway struct {
@@ -27,13 +29,12 @@ type plane struct {
 	planeInFlight bool
 	cruiseSpeed   float64
 	flightLog     []flight
-	location      planeLocation
 }
 
 // Flight represents a single flight from departure to arrival
 // *** implement the climb / decent
 type flight struct {
-	flightID         string // inthe format {fromairport/toairport/index in digit}
+	flightID         string
 	flightSchedule   flightPath
 	takeoffTime      time.Time
 	landingTime      time.Time
@@ -45,20 +46,3 @@ type flightPath struct {
 	depature coord
 	arrival  coord
 }
-
-// PlaneState represents the position and time of a plane
-type planeLocation struct {
-	point coord
-	time  time.Time
-}
-
-// CoincidenceResult to contain
-type coincidenceResult struct {
-	flight1     flight
-	flight2     flight
-	closestTime time.Time
-	minDistance float64
-}
-
-// constant to keep track of takeoff/landing time
-const takeofforLandingTime = 5
