@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"log"
 	"os"
+
+	"internal/config"
 )
 
 type cliCommand struct {
@@ -18,12 +20,12 @@ func startSimulation() error {
 	return nil
 }
 
-func logDetails(conf *apiConfig, argument2 string) error {
+func logDetails(conf *config.Config, argument2 string) error {
 	switch argument2 {
 	case "airports":
 		logAirportDetails(conf)
 	case "airplanes":
-		logAirPlanesDetails(conf)
+		logAirplanesDetails(conf)
 	case "flights":
 		fmt.Println("successfully logged flights")
 	default:
@@ -31,8 +33,8 @@ func logDetails(conf *apiConfig, argument2 string) error {
 	}
 	return nil
 }
-func logAirPlanesDetails(conf *apiConfig) {
-	logFilePath := "airPlaneDetails.txt"
+func logAirplanesDetails(conf *config.Config) {
+	logFilePath := "logs/airPlaneDetails.txt"
 	// Open the file in append mode. Create it if it doesn't exist.
 	f, err := os.OpenFile(logFilePath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 	if err != nil {
@@ -62,8 +64,8 @@ func logAirPlanesDetails(conf *apiConfig) {
 
 }
 
-func logAirportDetails(conf *apiConfig) {
-	logFilePath := "airPortDetails.txt"
+func logAirportDetails(conf *config.Config) {
+	logFilePath := "logs/airPortDetails.txt"
 	// Open the file in append mode. Create it if it doesn't exist.
 	f, err := os.OpenFile(logFilePath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 	if err != nil {
@@ -88,7 +90,7 @@ func logAirportDetails(conf *apiConfig) {
 	}
 }
 
-func getDetails(conf *apiConfig, argument2 string) error {
+func getDetails(conf *config.Config, argument2 string) error {
 	switch argument2 {
 	case "airports":
 		getAirportDetails(conf)
@@ -102,7 +104,7 @@ func getDetails(conf *apiConfig, argument2 string) error {
 	return nil
 }
 
-func getAirPlanesDetails(conf *apiConfig) {
+func getAirPlanesDetails(conf *config.Config) {
 	planes := []plane{}
 
 	for _, ap := range conf.listAirports {
@@ -126,7 +128,7 @@ func getAirPlanesDetails(conf *apiConfig) {
 
 }
 
-func getAirportDetails(conf *apiConfig) {
+func getAirportDetails(conf *config.Config) {
 	fmt.Println("\n--- Printing selected fields for each airport ---")
 	for i, ap := range conf.listAirports {
 		fmt.Printf("Airport %d (Serial: %s):\n", i+1, ap.serial)
@@ -151,7 +153,7 @@ func commandExit() error {
 	return nil
 }
 
-func helpFunc(conf *apiConfig, argument2 string) error {
+func helpFunc(conf *config.Config, argument2 string) error {
 	fmt.Print("Welcome to TCAS-simulator!\nUsage\n\n")
 	for key := range getCommand(conf, argument2) {
 		fmt.Printf("%s: %s\n", getCommand(conf, argument2)[key].name, getCommand(conf, argument2)[key].description)
@@ -159,7 +161,7 @@ func helpFunc(conf *apiConfig, argument2 string) error {
 	return nil
 }
 
-func getCommand(conf *apiConfig, argument2 string) map[string]cliCommand {
+func getCommand(conf *config.Config, argument2 string) map[string]cliCommand {
 	commands := map[string]cliCommand{
 		"exit": {
 			name:        "exit",

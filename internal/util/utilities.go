@@ -1,0 +1,35 @@
+package util
+
+import (
+	"os"
+	"strings"
+)
+
+// cleanInput processes a string, returning a slice of lowercase words with leading/trailing spaces and empty strings removed.
+func cleanInput(text string) []string {
+	words := []string{}
+	sText := strings.Split(strings.TrimSpace(text), " ")
+	for _, word := range sText {
+		if len(word) != 0 {
+			words = append(words, strings.ToLower(word))
+		}
+	}
+	return words
+}
+
+// resetLog removes all logs in logs/
+func resetLog() {
+	filesToDelete := []string{
+		"logs/airportDetails.txt",
+		"logs/airPlaneDetails.txt",
+		"logs/flightDetails.txt",
+	}
+
+	for _, filePath := range filesToDelete {
+		_, err := os.Stat(filePath)
+		if os.IsNotExist(err) {
+			continue
+		}
+		os.Remove(filePath)
+	}
+}

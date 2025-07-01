@@ -1,4 +1,4 @@
-package main
+package aviation
 
 import (
 	"fmt"
@@ -7,89 +7,13 @@ import (
 	"time"
 )
 
-// create appropriate amount of airports and airplanes
-func initializeAirports(conf *apiConfig) {
-
-	planesCreated := 0
-	airportsCreated := 0
-
-	for i := 0; planesCreated < conf.noOfAirplanes; i++ {
-		newAirport := createAirport(airportsCreated, planesCreated, conf.noOfAirplanes)
-		planesGenerated := planesCreated
-		for range newAirport.planeCapacity {
-			newPlane := createPlane(planesGenerated)
-			newAirport.planes = append(newAirport.planes, newPlane)
-			planesGenerated += 1
-		}
-		planesCreated += newAirport.planeCapacity
-		conf.listAirports = append(conf.listAirports, newAirport)
-		airportsCreated = i + 1
-	}
-
-	listOfAirportCoordinates := generateCoordinates(len(conf.listAirports))
-
-	for i := range conf.listAirports {
-		newLocation := coord{listOfAirportCoordinates[i].X, listOfAirportCoordinates[i].Y, 0.0}
-		conf.listAirports[i].location = newLocation
-	}
-
-	fmt.Printf("planes created: %d\n", conf.noOfAirplanes)
+// Coordinate represents a 3D Coordinate
+// may be changed to latitude logitude altitude
+type Coordinate struct {
+	X, Y, Z float64
 }
 
-func createAirport(airportCount, planecount, totalNumPlanes int) airport {
-	return airport{
-		serial:        generateSerialNumber(airportCount, "ap"),
-		planeCapacity: generatePlaneCapacity(totalNumPlanes, planecount),
-		runway:        generateRunway(),
-	}
-}
-
-func createPlane(planeCount int) plane {
-	return plane{
-		serial:        generateSerialNumber(planeCount, "p"),
-		planeInFlight: false,
-		cruiseSpeed:   0.1,
-		flightLog:     []flight{},
-	}
-}
-
-func generatePlaneCapacity(totalPlanes, planeGenerated int) int {
-	var randomNumber int
-	if totalPlanes < 20 {
-		planeToCreate := totalPlanes - planeGenerated
-		if planeToCreate <= 3 {
-			randomNumber = planeToCreate
-		} else {
-			randomNumber = rand.Intn(2) + 1
-		}
-
-	} else if totalPlanes < 100 {
-		planeToCreate := totalPlanes - planeGenerated
-		if planeToCreate <= 6 {
-			randomNumber = planeToCreate
-		} else {
-			randomNumber = rand.Intn(5) + 1
-		}
-
-	} else {
-		planeToCreate := totalPlanes - planeGenerated
-		if planeToCreate <= 30 {
-			randomNumber = planeToCreate
-		} else {
-			randomNumber = rand.Intn(20) + 10
-		}
-
-	}
-	return randomNumber
-}
-
-func generateRunway() runway {
-	return runway{
-		numberOfRunway:  1,
-		noOfRunwayinUse: 0,
-	}
-}
-
+// generateSerialNumber creates a formatted serial number based on a count and a specified prefix type.
 func generateSerialNumber(count int, paramType string) string {
 	var serialNumber string
 	adjustedCount := count - 1

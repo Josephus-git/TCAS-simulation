@@ -1,27 +1,44 @@
 package main
 
 import (
+	"bufio"
+	"fmt"
+	"internal/config"
 	"os"
 )
 
 func main() {
-	// reset all log files
 	resetLog()
-	startR()
+	start()
 }
 
-func resetLog() {
-	filesToDelete := []string{
-		"airportDetails.txt",
-		"airPlaneDetails.txt",
-		"flightDetails.txt",
-	}
+// start initializes the TCAS simulator, loads configurations, and enters a continuous command-line interaction loop.
+func start() {
+	scanner := bufio.NewScanner(os.Stdin)
+	api := &config.Config{}
 
-	for _, filePath := range filesToDelete {
-		_, err := os.Stat(filePath)
-		if os.IsNotExist(err) {
+	getNumberPlanes(api)
+	initializeAirports(api)
+
+	for i := 0; ; i++ {
+		fmt.Print("TCAS-simulator > ")
+		scanner.Scan()
+		input := cleanInput(scanner.Text())
+		argument2 := ""
+		if len(input) > 1 {
+			argument2 = input[1]
+		}
+
+		cmd, ok := getCommand(api, argument2)[input[0]]
+		if !ok {
+			fmt.Println("Unknown command, type <help> for usage")
 			continue
 		}
-		os.Remove(filePath)
+		err := cmd.callback()
+		if err != nil {
+			fmt.Printf("Error: %v\n", err)
+		}
+		println("")
+
 	}
 }

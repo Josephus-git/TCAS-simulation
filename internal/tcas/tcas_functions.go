@@ -1,4 +1,4 @@
-package main
+package tcas
 
 import (
 	"math"
@@ -7,22 +7,22 @@ import (
 // All functions here are just to implement the finding of closest approach between flight paths
 
 // Returns the sum of two Coords (3D vector)
-func (c coord) add(other coord) coord {
-	return coord{c.X + other.X, c.Y + other.Y, c.Z + other.Z}
+func (c Coordinate) add(other Coordinate) Coordinate {
+	return Coordinate{c.X + other.X, c.Y + other.Y, c.Z + other.Z}
 }
 
 // Returns the difference of two Coords (3D vector)
-func (c coord) subtract(other coord) coord {
-	return coord{c.X - other.X, c.Y - other.Y, c.Z - other.Z}
+func (c Coordinate) subtract(other Coordinate) Coordinate {
+	return Coordinate{c.X - other.X, c.Y - other.Y, c.Z - other.Z}
 }
 
 // Returns the coord scaled by a scalar
-func (c coord) mulScalar(s float64) coord {
-	return coord{c.X * s, c.Y * s, c.Z * s}
+func (c Coordinate) mulScalar(s float64) Coordinate {
+	return Coordinate{c.X * s, c.Y * s, c.Z * s}
 }
 
 // Returns the dot product of two coord
-func (c coord) dot(other coord) float64 {
+func (c Coordinate) dot(other Coordinate) float64 {
 	return (c.X * other.X) + (c.Y * other.Y) + (c.Z * other.Z)
 }
 
@@ -32,7 +32,7 @@ func clamp(val, min, max float64) float64 {
 }
 
 // returns closest points between flightpath 1 and flightpath
-func FindClosestApprachDuringTransit(fp1, fp2 flightPath) (fp1Closest, fp2Closest coord) {
+func FindClosestApprachDuringTransit(fp1, fp2 flightPath) (fp1Closest, fp2Closest Coordinate) {
 	p1 := fp1.depature
 	p2 := fp2.depature
 	q1 := fp1.arrival

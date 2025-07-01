@@ -1,4 +1,4 @@
-package main
+package tcas
 
 import (
 	"fmt"
@@ -7,12 +7,12 @@ import (
 )
 
 // resultant distance obtained by getting the magnitude of distance btw the two coordinates
-func distance(p1, p2 coord) float64 {
+func distance(p1, p2 Coordinate) float64 {
 	return math.Sqrt(math.Pow(p1.X-p2.X, 2) + math.Pow(p1.Y-p2.Y, 2) + math.Pow(p1.Z-p2.Z, 2))
 }
 
 // get the time at which the planes will be closest and the distance at this time
-func (f1 flight) GetClosestApproachDetails(f2 flight) (closestTime time.Time, distanceBetweenPlanesatCA float64) {
+func (f1 Flight) GetClosestApproachDetails(f2 Flight) (closestTime time.Time, distanceBetweenPlanesatCA float64) {
 	// get time When planes will get to coincidence point
 	flight1ClosestCoord, flight2ClosestCoord := FindClosestApprachDuringTransit(f1.flightSchedule, f2.flightSchedule)
 
@@ -30,12 +30,12 @@ func (f1 flight) GetClosestApproachDetails(f2 flight) (closestTime time.Time, di
 }
 
 // Get planes position
-func (p plane) getPlanePosition(f flight, t time.Time) (coord, error) {
-	if t.Before(f.takeoffTime) || t.After(f.landingTime) { //*** return here to check incase plane shold go on another flight
-		return coord{}, fmt.Errorf("time %v is outside flight %s duration", t, f.flightID)
+func (p Plane) getPlanePosition(f Flight, t time.Time) (Coordinate, error) {
+	if t.Before(f.takeoffTime) || t.After(f.landingTime) { //*** return here to check incase plane shold go on another Flight
+		return Coordinate{}, fmt.Errorf("time %v is outside Flight %s duration", t, f.flightID)
 	}
 
-	// Calculate fraction of flight completed (normalized time 0-1)
+	// Calculate fraction of Flight completed (normalized time 0-1)
 	totalDuration := f.landingTime.Sub(f.takeoffTime)
 	elapsed := t.Sub(f.takeoffTime)
 	progress := float64(elapsed) / float64(totalDuration)
@@ -49,5 +49,5 @@ func (p plane) getPlanePosition(f flight, t time.Time) (coord, error) {
 	pY := departureLocation.Y + (departureLocation.Y-arivalLocation.Y)*progress
 	pZ := f.cruisingAltitude
 
-	return coord{X: pX, Y: pY, Z: pZ}, nil
+	return Coordinate{X: pX, Y: pY, Z: pZ}, nil
 }
