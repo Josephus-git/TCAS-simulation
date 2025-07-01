@@ -2,9 +2,11 @@ package main
 
 import (
 	"fmt"
-	"internal/config"
+
 	"log"
 	"os"
+
+	"github.com/josephus-git/TCAS-simulation/internal/aviation"
 )
 
 type cliCommand struct {
@@ -19,12 +21,12 @@ func startSimulation() error {
 	return nil
 }
 
-func logDetails(conf *config.Config, argument2 string) error {
+func logDetails(simState *aviation.SimulationState, argument2 string) error {
 	switch argument2 {
 	case "airports":
-		logAirportDetails(conf)
+		logAirportDetails(simState)
 	case "airplanes":
-		logAirplanesDetails(conf)
+		logAirplanesDetails(simState)
 	case "flights":
 		fmt.Println("successfully logged flights")
 	default:
@@ -32,7 +34,7 @@ func logDetails(conf *config.Config, argument2 string) error {
 	}
 	return nil
 }
-func logAirplanesDetails(conf *config.Config) {
+func logAirplanesDetails(simState *aviation.SimulationState) {
 	logFilePath := "logs/airPlaneDetails.txt"
 	// Open the file in append mode. Create it if it doesn't exist.
 	f, err := os.OpenFile(logFilePath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
@@ -41,20 +43,20 @@ func logAirplanesDetails(conf *config.Config) {
 	}
 	defer f.Close()
 
-	planes := []plane{}
-	for _, ap := range conf.listAirports {
-		planes = append(planes, ap.planes...)
+	Planes := []aviation.Plane{}
+	for _, ap := range simState.Airports {
+		Planes = append(Planes, ap.Planes...)
 	}
 	fmt.Println("\n--- Logging selected fields for each plane ---")
-	for i, p := range planes {
-		fmt.Fprintf(f, "Plane %d (Serial: %s):\n", i+1, p.serial)
-		fmt.Fprintf(f, "  In Flight: %t\n", p.planeInFlight)
-		fmt.Fprintf(f, "  Cruise Speed: %.2f km/h\n", p.cruiseSpeed)
+	for i, p := range Planes {
+		fmt.Fprintf(f, "Plane %d (Serial: %s):\n", i+1, p.Serial)
+		fmt.Fprintf(f, "  In Flight: %t\n", p.PlaneInFlight)
+		fmt.Fprintf(f, "  Cruise Speed: %.2f km/h\n", p.CruiseSpeed)
 		fmt.Fprintln(f, "  Flight Log:")
-		if len(p.flightLog) == 0 {
+		if len(p.FlightLog) == 0 {
 			fmt.Fprintln(f, "    No flights recorded for this plane.")
 		} else {
-			for j := range p.flightLog { // Looping to count flights, but not printing content if 'flight' is empty
+			for j := range p.FlightLog { // Looping to count flights, but not printing content if 'flight' is empty
 				fmt.Fprintf(f, "    Flight %d (details depend on 'flight' struct's fields)\n", j+1)
 			}
 		}
@@ -63,7 +65,7 @@ func logAirplanesDetails(conf *config.Config) {
 
 }
 
-func logAirportDetails(conf *config.Config) {
+func logAirportDetails(simState *aviation.SimulationState) {
 	logFilePath := "logs/airPortDetails.txt"
 	// Open the file in append mode. Create it if it doesn't exist.
 	f, err := os.OpenFile(logFilePath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
@@ -72,29 +74,29 @@ func logAirportDetails(conf *config.Config) {
 	}
 	defer f.Close()
 	fmt.Fprintln(f, "\n--- Logging selected fields for each airport ---")
-	for i, ap := range conf.listAirports {
-		fmt.Fprintf(f, "Airport %d (Serial: %s):\n", i+1, ap.serial)
-		fmt.Fprintf(f, "  Location: %v\n", ap.location)
-		fmt.Fprintf(f, "  Plane Capacity: %d\n", ap.planeCapacity)
-		fmt.Fprintf(f, "  Runway: %v\n", ap.runway)
+	for i, ap := range simState.Airports {
+		fmt.Fprintf(f, "Airport %d (Serial: %s):\n", i+1, ap.Serial)
+		fmt.Fprintf(f, "  Location: %v\n", ap.Location)
+		fmt.Fprintf(f, "  Plane Capacity: %d\n", ap.PlaneCapacity)
+		fmt.Fprintf(f, "  Runway: %v\n", ap.Runway)
 		fmt.Fprintln(f, "  Planes:")
-		if len(ap.planes) == 0 {
-			fmt.Fprintln(f, "    No planes currently.")
+		if len(ap.Planes) == 0 {
+			fmt.Fprintln(f, "    No Planes currently.")
 		} else {
-			for j, p := range ap.planes {
-				fmt.Fprintf(f, "    %d. Serial: %s\n", j+1, p.serial)
+			for j, p := range ap.Planes {
+				fmt.Fprintf(f, "    %d. Serial: %s\n", j+1, p.Serial)
 			}
 		}
 		fmt.Fprintln(f, "-------------------------------------------")
 	}
 }
 
-func getDetails(conf *config.Config, argument2 string) error {
+func getDetails(simState *aviation.SimulationState, argument2 string) error {
 	switch argument2 {
 	case "airports":
-		getAirportDetails(conf)
+		getAirportDetails(simState)
 	case "airplanes":
-		getAirPlanesDetails(conf)
+		getAirPlanesDetails(simState)
 	case "flights":
 		fmt.Println("successfully got flights")
 	default:
@@ -103,22 +105,22 @@ func getDetails(conf *config.Config, argument2 string) error {
 	return nil
 }
 
-func getAirPlanesDetails(conf *config.Config) {
-	planes := []plane{}
+func getAirPlanesDetails(simstate *aviation.SimulationState) {
+	Planes := []aviation.Plane{}
 
-	for _, ap := range conf.listAirports {
-		planes = append(planes, ap.planes...)
+	for _, ap := range simstate.Airports {
+		Planes = append(Planes, ap.Planes...)
 	}
 	fmt.Println("\n--- Printing selected fields for each plane ---")
-	for i, p := range planes {
-		fmt.Printf("Plane %d (Serial: %s):\n", i+1, p.serial)
-		fmt.Printf("  In Flight: %t\n", p.planeInFlight)
-		fmt.Printf("  Cruise Speed: %.2f km/h\n", p.cruiseSpeed)
+	for i, p := range Planes {
+		fmt.Printf("Plane %d (Serial: %s):\n", i+1, p.Serial)
+		fmt.Printf("  In Flight: %t\n", p.PlaneInFlight)
+		fmt.Printf("  Cruise Speed: %.2f km/h\n", p.CruiseSpeed)
 		fmt.Println("  Flight Log:")
-		if len(p.flightLog) == 0 {
+		if len(p.FlightLog) == 0 {
 			fmt.Println("    No flights recorded for this plane.")
 		} else {
-			for j := range p.flightLog { // Looping to count flights, but not printing content if 'flight' is empty
+			for j := range p.FlightLog { // Looping to count flights, but not printing content if 'flight' is empty
 				fmt.Printf("    Flight %d (details depend on 'flight' struct's fields)\n", j+1)
 			}
 		}
@@ -127,19 +129,19 @@ func getAirPlanesDetails(conf *config.Config) {
 
 }
 
-func getAirportDetails(conf *config.Config) {
+func getAirportDetails(simState *aviation.SimulationState) {
 	fmt.Println("\n--- Printing selected fields for each airport ---")
-	for i, ap := range conf.listAirports {
-		fmt.Printf("Airport %d (Serial: %s):\n", i+1, ap.serial)
-		fmt.Printf("  Location: %v\n", ap.location)
-		fmt.Printf("  Plane Capacity: %d\n", ap.planeCapacity)
-		fmt.Printf("  Runway: %v\n", ap.runway)
+	for i, ap := range simState.Airports {
+		fmt.Printf("Airport %d (Serial: %s):\n", i+1, ap.Serial)
+		fmt.Printf("  Location: %v\n", ap.Location)
+		fmt.Printf("  Plane Capacity: %d\n", ap.PlaneCapacity)
+		fmt.Printf("  Runway: %v\n", ap.Runway)
 		fmt.Println("  Planes:")
-		if len(ap.planes) == 0 {
-			fmt.Println("    No planes currently.")
+		if len(ap.Planes) == 0 {
+			fmt.Println("    No Planes currently.")
 		} else {
-			for j, p := range ap.planes {
-				fmt.Printf("    %d. Serial: %s\n", j+1, p.serial)
+			for j, p := range ap.Planes {
+				fmt.Printf("    %d. Serial: %s\n", j+1, p.Serial)
 			}
 		}
 		fmt.Println("-------------------------------------------")
@@ -152,15 +154,15 @@ func commandExit() error {
 	return nil
 }
 
-func helpFunc(conf *config.Config, argument2 string) error {
+func helpFunc(simState *aviation.SimulationState, argument2 string) error {
 	fmt.Print("Welcome to TCAS-simulator!\nUsage\n\n")
-	for key := range getCommand(conf, argument2) {
-		fmt.Printf("%s: %s\n", getCommand(conf, argument2)[key].name, getCommand(conf, argument2)[key].description)
+	for key := range getCommand(simState, argument2) {
+		fmt.Printf("%s: %s\n", getCommand(simState, argument2)[key].name, getCommand(simState, argument2)[key].description)
 	}
 	return nil
 }
 
-func getCommand(conf *config.Config, argument2 string) map[string]cliCommand {
+func getCommand(simState *aviation.SimulationState, argument2 string) map[string]cliCommand {
 	commands := map[string]cliCommand{
 		"exit": {
 			name:        "exit",
@@ -173,7 +175,7 @@ func getCommand(conf *config.Config, argument2 string) map[string]cliCommand {
 			name:        "help",
 			description: "Display usage of the application",
 			callback: func() error {
-				return helpFunc(conf, argument2)
+				return helpFunc(simState, argument2)
 			},
 		},
 		"start": {
@@ -185,16 +187,16 @@ func getCommand(conf *config.Config, argument2 string) map[string]cliCommand {
 		},
 		"get": {
 			name:        "get",
-			description: "prints details of the simulation such as airports, planes and flights to the console",
+			description: "prints details of the simulation such as airports, Planes and flights to the console",
 			callback: func() error {
-				return getDetails(conf, argument2)
+				return getDetails(simState, argument2)
 			},
 		},
 		"log": {
 			name:        "log",
-			description: "logs details of the simulation such as airports, planes and flights to an appropriate file",
+			description: "logs details of the simulation such as airports, Planes and flights to an appropriate file",
 			callback: func() error {
-				return logDetails(conf, argument2)
+				return logDetails(simState, argument2)
 			},
 		},
 	}

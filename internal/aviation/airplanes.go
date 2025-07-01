@@ -8,18 +8,18 @@ import (
 )
 
 type Plane struct {
-	serial        string
-	planeInFlight bool
-	cruiseSpeed   float64
-	flightLog     []Flight
+	Serial        string
+	PlaneInFlight bool
+	CruiseSpeed   float64
+	FlightLog     []Flight
 }
 
 func createPlane(planeCount int) Plane {
 	return Plane{
-		serial:        generateSerialNumber(planeCount, "p"),
-		planeInFlight: false,
-		cruiseSpeed:   0.1,
-		flightLog:     []Flight{},
+		Serial:        generateSerialNumber(planeCount, "p"),
+		PlaneInFlight: false,
+		CruiseSpeed:   0.1,
+		FlightLog:     []Flight{},
 	}
 }
 

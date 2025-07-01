@@ -8,11 +8,11 @@ import (
 
 // Airport represents an Airport with its location
 type Airport struct {
-	serial        string
-	location      Coordinate
-	planeCapacity int
-	runway        runway
-	planes        []Plane
+	Serial        string
+	Location      Coordinate
+	PlaneCapacity int
+	Runway        runway
+	Planes        []Plane
 }
 
 type runway struct {
@@ -29,12 +29,12 @@ func InitializeAirports(conf *config.Config, simState *SimulationState) {
 	for i := 0; planesCreated < conf.NoOfAirplanes; i++ {
 		newAirport := createAirport(airportsCreated, planesCreated, conf.NoOfAirplanes)
 		planesGenerated := planesCreated
-		for range newAirport.planeCapacity {
+		for range newAirport.PlaneCapacity {
 			newPlane := createPlane(planesGenerated)
-			newAirport.planes = append(newAirport.planes, newPlane)
+			newAirport.Planes = append(newAirport.Planes, newPlane)
 			planesGenerated += 1
 		}
-		planesCreated += newAirport.planeCapacity
+		planesCreated += newAirport.PlaneCapacity
 		simState.Airports = append(simState.Airports, newAirport)
 		airportsCreated = i + 1
 	}
@@ -43,7 +43,7 @@ func InitializeAirports(conf *config.Config, simState *SimulationState) {
 
 	for i := range simState.Airports {
 		newLocation := Coordinate{listOfAirportCoordinates[i].X, listOfAirportCoordinates[i].Y, 0.0}
-		simState.Airports[i].location = newLocation
+		simState.Airports[i].Location = newLocation
 	}
 
 	fmt.Printf("planes created: %d\n", conf.NoOfAirplanes)
@@ -51,9 +51,9 @@ func InitializeAirports(conf *config.Config, simState *SimulationState) {
 
 func createAirport(airportCount, planecount, totalNumPlanes int) Airport {
 	return Airport{
-		serial:        generateSerialNumber(airportCount, "ap"),
-		planeCapacity: generatePlaneCapacity(totalNumPlanes, planecount),
-		runway:        generateRunway(),
+		Serial:        generateSerialNumber(airportCount, "ap"),
+		PlaneCapacity: generatePlaneCapacity(totalNumPlanes, planecount),
+		Runway:        generateRunway(),
 	}
 }
 
