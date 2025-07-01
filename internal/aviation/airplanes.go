@@ -7,7 +7,7 @@ import (
 	"os"
 	"strconv"
 
-	"github.com/josephus-git/DEV_ACTUAL_1/TCAS-simulation/internal/config"
+	"github.com/josephus-git/TCAS-simulation/internal/config"
 )
 
 type plane struct {

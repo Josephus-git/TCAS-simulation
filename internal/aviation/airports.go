@@ -1,6 +1,10 @@
 package aviation
 
-import "fmt"
+import (
+	"fmt"
+
+	"github.com/josephus-git/TCAS-simulation/internal/config"
+)
 
 // Airport represents an Airport with its location
 type Airport struct {
@@ -17,7 +21,7 @@ type runway struct {
 }
 
 // InitializeAirports creates appropriate amount of airports and airplanes
-func InitializeAirports(conf *apiConfig) {
+func InitializeAirports(conf *config.Config) {
 
 	planesCreated := 0
 	airportsCreated := 0
