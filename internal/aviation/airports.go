@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/josephus-git/TCAS-simulation/internal/config"
+	"github.com/josephus-git/TCAS-simulation/internal/util"
 )
 
 // Airport represents an Airport with its location
@@ -15,6 +16,7 @@ type Airport struct {
 	Planes        []Plane
 }
 
+// runway represents the state of an airport's runways.
 type runway struct {
 	numberOfRunway  int
 	noOfRunwayinUse int
@@ -49,9 +51,11 @@ func InitializeAirports(conf *config.Config, simState *SimulationState) {
 	fmt.Printf("planes created: %d\n", conf.NoOfAirplanes)
 }
 
+// createAirport initializes and returns a new Airport struct.
+// It generates a serial number, plane capacity, and runway details for the airport.
 func createAirport(airportCount, planecount, totalNumPlanes int) Airport {
 	return Airport{
-		Serial:        generateSerialNumber(airportCount, "ap"),
+		Serial:        util.GenerateSerialNumber(airportCount, "ap"),
 		PlaneCapacity: generatePlaneCapacity(totalNumPlanes, planecount),
 		Runway:        generateRunway(),
 	}

@@ -5,8 +5,11 @@ import (
 	"math"
 	"math/rand"
 	"time"
+
+	"github.com/josephus-git/TCAS-simulation/internal/util"
 )
 
+// Plane represents an aircraft with its key operational details and flight history.
 type Plane struct {
 	Serial        string
 	PlaneInFlight bool
@@ -14,15 +17,18 @@ type Plane struct {
 	FlightLog     []Flight
 }
 
+// createPlane initializes and returns a new Plane struct with a generated serial number.
 func createPlane(planeCount int) Plane {
 	return Plane{
-		Serial:        generateSerialNumber(planeCount, "p"),
+		Serial:        util.GenerateSerialNumber(planeCount, "p"),
 		PlaneInFlight: false,
 		CruiseSpeed:   0.1,
 		FlightLog:     []Flight{},
 	}
 }
 
+// generatePlaneCapacity calculates a random number of planes to create,
+// adjusting the quantity based on the total target and already generated planes.
 func generatePlaneCapacity(totalPlanes, planeGenerated int) int {
 	var randomNumber int
 	if totalPlanes < 20 {
@@ -53,7 +59,8 @@ func generatePlaneCapacity(totalPlanes, planeGenerated int) int {
 	return randomNumber
 }
 
-// Get planes position
+// getPlanePosition calculates the plane's interpolated coordinates (X, Y, Z) at a given time during a specific flight.
+// It returns an error if the provided time is outside the flight's duration.
 func (p Plane) getPlanePosition(f Flight, t time.Time) (Coordinate, error) {
 	if t.Before(f.TakeoffTime) || t.After(f.LandingTime) { //*** return here to check incase plane shold go on another Flight
 		return Coordinate{}, fmt.Errorf("time %v is outside Flight %s duration", t, f.FlightID)
@@ -76,15 +83,14 @@ func (p Plane) getPlanePosition(f Flight, t time.Time) (Coordinate, error) {
 	return Coordinate{X: pX, Y: pY, Z: pZ}, nil
 }
 
-// resultant distance obtained by getting the magnitude of distance btw the two coordinates
+// distance calculates the Euclidean distance between two 3D coordinates.
 func distance(p1, p2 Coordinate) float64 {
 	return math.Sqrt(math.Pow(p1.X-p2.X, 2) + math.Pow(p1.Y-p2.Y, 2) + math.Pow(p1.Z-p2.Z, 2))
 }
 
-// get the time at which the planes will be closest and the distance at this time
+// GetClosestApproachDetails calculates the time and minimum distance at which two planes will be closest during their respective flights.
 func (f1 Flight) GetClosestApproachDetails(f2 Flight) (closestTime time.Time, distanceBetweenPlanesatCA float64) {
-	// get time When planes will get to coincidence point
-	flight1ClosestCoord, flight2ClosestCoord := FindClosestApprachDuringTransit(f1.FlightSchedule, f2.FlightSchedule)
+	flight1ClosestCoord, flight2ClosestCoord := FindClosestApproachDuringTransit(f1.FlightSchedule, f2.FlightSchedule)
 
 	flight1Distance := distance(f1.FlightSchedule.Depature, f1.FlightSchedule.Arrival)
 	distBtwDepatureAndClosestApproachForFlight1 := distance(f1.FlightSchedule.Depature, flight1ClosestCoord)

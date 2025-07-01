@@ -7,17 +7,22 @@ import (
 	"time"
 )
 
-// Test helpers for float comparison
+// Test helpers for float comparison:
+// FloatEqualityThreshold defines the tolerance for comparing floating-point numbers.
 const FloatEqualityThreshold = 1e-5
 
+// FloatEquals compares two float64 numbers for approximate equality.
 func FloatEquals(a, b float64) bool {
 	return math.Abs(a-b) < FloatEqualityThreshold
 }
 
+// CoordEquals compares two Coordinate structs for approximate equality.
 func CoordEquals(c1, c2 Coordinate) bool {
 	return FloatEquals(c1.X, c2.X) && FloatEquals(c1.Y, c2.Y) && FloatEquals(c1.Z, c2.Z)
 }
 
+// TestFindClosestApproachDuringTransit verifies the accuracy of FindClosestApprachDuringTransit
+// by testing various flight path configurations, including intersecting, parallel, and skew paths.
 func TestFindClosestApproachDuringTransit(t *testing.T) {
 	tests := []struct {
 		name    string
@@ -134,7 +139,7 @@ func TestFindClosestApproachDuringTransit(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			gotFp1, gotFp2 := FindClosestApprachDuringTransit(test.fp1, test.fp2)
+			gotFp1, gotFp2 := FindClosestApproachDuringTransit(test.fp1, test.fp2)
 
 			if !CoordEquals(gotFp1, test.wantFp1) {
 				t.Errorf("\nFor %s\n fp1Closest: got %v, want %v\n", test.name, gotFp1, test.wantFp1)

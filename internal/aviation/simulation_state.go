@@ -25,29 +25,8 @@ type Coordinate struct {
 	X, Y, Z float64
 }
 
-// generateSerialNumber creates a formatted serial number based on a count and a specified prefix type.
-func generateSerialNumber(count int, paramType string) string {
-	var serialNumber string
-	adjustedCount := count - 1
-	blockIndex := adjustedCount / 999
-
-	letter := string('A' + rune(blockIndex))
-
-	numericalPart := (adjustedCount % 999) + 1
-	formatedNumericPart := fmt.Sprintf("%03d", numericalPart)
-
-	switch paramType {
-	case "p":
-		serialNumber = fmt.Sprintf("P_%s%s", letter, formatedNumericPart)
-	case "ap":
-		serialNumber = fmt.Sprintf("AP_%s%s", letter, formatedNumericPart)
-	case "f":
-		serialNumber = fmt.Sprintf("F_%s%s", letter, formatedNumericPart)
-	}
-
-	return serialNumber
-}
-
+// GetNumberOfPlanes prompts the user to input the desired number of planes for the simulation.
+// It validates the input to ensure it's an integer greater than 1 and updates the configuration.
 func GetNumberOfPlanes(conf *config.Config) {
 	scanner := bufio.NewScanner(os.Stdin)
 	fmt.Println("Welcome to TCAS-simulator")

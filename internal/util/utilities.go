@@ -5,7 +5,7 @@ import (
 	"strings"
 )
 
-// cleanInput processes a string, returning a slice of lowercase words with leading/trailing spaces and empty strings removed.
+// CleanInput processes a string, returning a slice of lowercase words with leading/trailing spaces and empty strings removed.
 func CleanInput(text string) []string {
 	words := []string{}
 	sText := strings.Split(strings.TrimSpace(text), " ")
@@ -17,7 +17,7 @@ func CleanInput(text string) []string {
 	return words
 }
 
-// resetLog removes all logs in logs/
+// ResetLog removes all logs in logs/
 func ResetLog() {
 	filesToDelete := []string{
 		"logs/airportDetails.txt",

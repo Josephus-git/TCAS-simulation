@@ -4,33 +4,33 @@ import "math"
 
 // All functions here are just to implement the finding of closest approach between flight paths
 
-// Returns the sum of two Coords (3D vector)
+// add returns the sum of two Coordinates (3D vector)
 func (c Coordinate) add(other Coordinate) Coordinate {
 	return Coordinate{c.X + other.X, c.Y + other.Y, c.Z + other.Z}
 }
 
-// Returns the difference of two Coords (3D vector)
+// subtract returns the difference of two Coordinates (3D vector)
 func (c Coordinate) subtract(other Coordinate) Coordinate {
 	return Coordinate{c.X - other.X, c.Y - other.Y, c.Z - other.Z}
 }
 
-// Returns the coord scaled by a scalar
+// mulScalar returns the Coordinates scaled by a scalar
 func (c Coordinate) mulScalar(s float64) Coordinate {
 	return Coordinate{c.X * s, c.Y * s, c.Z * s}
 }
 
-// Returns the dot product of two coord
+// dot returns the dot product of two Coordinates
 func (c Coordinate) dot(other Coordinate) float64 {
 	return (c.X * other.X) + (c.Y * other.Y) + (c.Z * other.Z)
 }
 
-// limits a value to a specific range, ensuring it falls within a minimum and maximum boundary
+// clamp limits a value to a specific range, ensuring it falls within a minimum and maximum boundary
 func clamp(val, min, max float64) float64 {
 	return math.Max(min, math.Min(val, max))
 }
 
-// returns closest points between flightpath 1 and flightpath
-func FindClosestApprachDuringTransit(fp1, fp2 FlightPath) (fp1Closest, fp2Closest Coordinate) {
+// FindClosestApproachDuringTransit returns closest points between flightpath 1 and flightpath
+func FindClosestApproachDuringTransit(fp1, fp2 FlightPath) (fp1Closest, fp2Closest Coordinate) {
 	p1 := fp1.Depature
 	p2 := fp2.Depature
 	q1 := fp1.Arrival
