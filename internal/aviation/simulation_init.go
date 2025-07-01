@@ -1,11 +1,23 @@
 package aviation
 
 import (
+	"bufio"
 	"fmt"
 	"math"
 	"math/rand"
+	"os"
+	"strconv"
 	"time"
+
+	"github.com/josephus-git/TCAS-simulation/internal/config"
+	"github.com/josephus-git/TCAS-simulation/internal/util"
 )
+
+// SimulationState holds the collection of live domain objects and their current state
+type SimulationState struct {
+	Airports       []Airport
+	PlanesInFlight []Plane
+}
 
 // Coordinate represents a 3D Coordinate
 // may be changed to latitude logitude altitude
@@ -24,15 +36,42 @@ func generateSerialNumber(count int, paramType string) string {
 	numericalPart := (adjustedCount % 999) + 1
 	formatedNumericPart := fmt.Sprintf("%03d", numericalPart)
 
-	if paramType == "p" {
+	switch paramType {
+	case "p":
 		serialNumber = fmt.Sprintf("P_%s%s", letter, formatedNumericPart)
-	} else if paramType == "ap" {
+	case "ap":
 		serialNumber = fmt.Sprintf("AP_%s%s", letter, formatedNumericPart)
-	} else if paramType == "f" {
+	case "f":
 		serialNumber = fmt.Sprintf("F_%s%s", letter, formatedNumericPart)
 	}
 
 	return serialNumber
+}
+
+func GetNumberOfPlanes(conf *config.Config) {
+	scanner := bufio.NewScanner(os.Stdin)
+	fmt.Println("Welcome to TCAS-simulator")
+	notValidInput := true
+
+	for i := 0; notValidInput; i++ {
+
+		fmt.Print("Input the number of planes for the simulation > ")
+		scanner.Scan()
+		input := util.CleanInput(scanner.Text())
+		num, err := strconv.Atoi(input[0])
+		if err != nil {
+			fmt.Println("Please input a valid integer")
+			continue
+		}
+		if num < 2 {
+			fmt.Println("Please input a valid integer greater than 1")
+			continue
+		}
+
+		conf.NoOfAirplanes = num
+		notValidInput = false
+	}
+
 }
 
 // Point represents a 2D coordinate with X and Y components.

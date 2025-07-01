@@ -1,8 +1,6 @@
-package tcas
+package aviation
 
-import (
-	"math"
-)
+import "math"
 
 // All functions here are just to implement the finding of closest approach between flight paths
 
@@ -32,11 +30,11 @@ func clamp(val, min, max float64) float64 {
 }
 
 // returns closest points between flightpath 1 and flightpath
-func FindClosestApprachDuringTransit(fp1, fp2 flightPath) (fp1Closest, fp2Closest Coordinate) {
-	p1 := fp1.depature
-	p2 := fp2.depature
-	q1 := fp1.arrival
-	q2 := fp2.arrival
+func FindClosestApprachDuringTransit(fp1, fp2 FlightPath) (fp1Closest, fp2Closest Coordinate) {
+	p1 := fp1.Depature
+	p2 := fp2.Depature
+	q1 := fp1.Arrival
+	q2 := fp2.Arrival
 	// Segment 1: P1 + t*D1 (from p1 to q1)
 	// Segment 2: P2 + u*D2 (from p2 to q2)
 	D1 := q1.subtract(p1)

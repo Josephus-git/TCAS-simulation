@@ -15,10 +15,10 @@ func main() {
 // start initializes the TCAS simulator, loads configurations, and enters a continuous command-line interaction loop.
 func start() {
 	scanner := bufio.NewScanner(os.Stdin)
-	api := &config.Config{}
+	initialize := &config.Config{}
 
-	getNumberPlanes(api)
-	initializeAirports(api)
+	getNumberPlanes(initialize)
+	initializeAirports(initialize)
 
 	for i := 0; ; i++ {
 		fmt.Print("TCAS-simulator > ")

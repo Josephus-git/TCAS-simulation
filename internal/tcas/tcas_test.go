@@ -5,6 +5,8 @@ import (
 	"math"
 	"testing"
 	"time"
+
+	"github.com/josephus-git/TCAS-simulation/internal/Aviation"
 )
 
 // Test helpers for float comparison
@@ -14,121 +16,121 @@ func FloatEquals(a, b float64) bool {
 	return math.Abs(a-b) < FloatEqualityThreshold
 }
 
-func CoordEquals(c1, c2 coordinate) bool {
+func CoordEquals(c1, c2 Aviation.Coordinate) bool {
 	return FloatEquals(c1.X, c2.X) && FloatEquals(c1.Y, c2.Y) && FloatEquals(c1.Z, c2.Z)
 }
 
 func TestFindClosestApproachDuringTransit(t *testing.T) {
 	tests := []struct {
 		name    string
-		fp1     flightPath
-		fp2     flightPath
-		wantFp1 coordinate
-		wantFp2 coordinate
+		fp1     Aviation.FlightPath
+		fp2     Aviation.FlightPath
+		wantFp1 Aviation.Coordinate
+		wantFp2 Aviation.Coordinate
 	}{
 		{
 			name: "Intersecting Paths",
-			fp1: flightPath{
-				depature: coordinate{X: 0, Y: 0, Z: 0},
-				arrival:  coordinate{X: 10, Y: 0, Z: 0},
+			fp1: Aviation.FlightPath{
+				Depature: Aviation.Coordinate{X: 0, Y: 0, Z: 0},
+				arrival:  Aviation.Coordinate{X: 10, Y: 0, Z: 0},
 			},
-			fp2: flightPath{
-				depature: coordinate{X: 5, Y: -5, Z: 0},
-				arrival:  coordinate{X: 5, Y: 5, Z: 0},
+			fp2: Aviation.FlightPath{
+				Depature: Aviation.Coordinate{X: 5, Y: -5, Z: 0},
+				arrival:  Aviation.Coordinate{X: 5, Y: 5, Z: 0},
 			},
-			wantFp1: coordinate{X: 5, Y: 0, Z: 0},
-			wantFp2: coordinate{X: 5, Y: 0, Z: 0},
+			wantFp1: Aviation.Coordinate{X: 5, Y: 0, Z: 0},
+			wantFp2: Aviation.Coordinate{X: 5, Y: 0, Z: 0},
 		},
 		{
 			name: "Parallel Paths (non-overlapping)",
-			fp1: flightPath{
-				depature: coordinate{X: 0, Y: 0, Z: 0},
-				arrival:  coordinate{X: 10, Y: 0, Z: 0},
+			fp1: Aviation.FlightPath{
+				Depature: Aviation.Coordinate{X: 0, Y: 0, Z: 0},
+				arrival:  Aviation.Coordinate{X: 10, Y: 0, Z: 0},
 			},
-			fp2: flightPath{
-				depature: coordinate{X: 0, Y: 1, Z: 0},
-				arrival:  coordinate{X: 10, Y: 1, Z: 0},
+			fp2: Aviation.FlightPath{
+				Depature: Aviation.Coordinate{X: 0, Y: 1, Z: 0},
+				arrival:  Aviation.Coordinate{X: 10, Y: 1, Z: 0},
 			},
-			wantFp1: coordinate{X: 0, Y: 0, Z: 0},
-			wantFp2: coordinate{X: 0, Y: 1, Z: 0},
+			wantFp1: Aviation.Coordinate{X: 0, Y: 0, Z: 0},
+			wantFp2: Aviation.Coordinate{X: 0, Y: 1, Z: 0},
 		},
 		{
 			name: "Skew Paths (non-intersecting, 3D)",
-			fp1: flightPath{
-				depature: coordinate{X: 0, Y: 0, Z: 0},
-				arrival:  coordinate{X: 10, Y: 0, Z: 0},
+			fp1: Aviation.FlightPath{
+				Depature: Aviation.Coordinate{X: 0, Y: 0, Z: 0},
+				arrival:  Aviation.Coordinate{X: 10, Y: 0, Z: 0},
 			},
-			fp2: flightPath{
-				depature: coordinate{X: 0, Y: 10, Z: 10},
-				arrival:  coordinate{X: 10, Y: 10, Z: 0},
+			fp2: Aviation.FlightPath{
+				Depature: Aviation.Coordinate{X: 0, Y: 10, Z: 10},
+				arrival:  Aviation.Coordinate{X: 10, Y: 10, Z: 0},
 			},
-			wantFp1: coordinate{X: 10, Y: 0, Z: 0},
-			wantFp2: coordinate{X: 10, Y: 10, Z: 0},
+			wantFp1: Aviation.Coordinate{X: 10, Y: 0, Z: 0},
+			wantFp2: Aviation.Coordinate{X: 10, Y: 10, Z: 0},
 		},
 		{
 			name: "Endpoint to Endpoint (closest is an end point)",
-			fp1: flightPath{
-				depature: coordinate{X: 0, Y: 0, Z: 0},
-				arrival:  coordinate{X: 1, Y: 0, Z: 0},
+			fp1: Aviation.FlightPath{
+				Depature: Aviation.Coordinate{X: 0, Y: 0, Z: 0},
+				arrival:  Aviation.Coordinate{X: 1, Y: 0, Z: 0},
 			},
-			fp2: flightPath{
-				depature: coordinate{X: 10, Y: 0, Z: 0},
-				arrival:  coordinate{X: 11, Y: 0, Z: 0},
+			fp2: Aviation.FlightPath{
+				Depature: Aviation.Coordinate{X: 10, Y: 0, Z: 0},
+				arrival:  Aviation.Coordinate{X: 11, Y: 0, Z: 0},
 			},
-			wantFp1: coordinate{X: 1, Y: 0, Z: 0},
-			wantFp2: coordinate{X: 10, Y: 0, Z: 0},
+			wantFp1: Aviation.Coordinate{X: 1, Y: 0, Z: 0},
+			wantFp2: Aviation.Coordinate{X: 10, Y: 0, Z: 0},
 		},
 		{
 			name: "Identical Paths (should return start points)",
-			fp1: flightPath{
-				depature: coordinate{X: 0, Y: 0, Z: 0},
-				arrival:  coordinate{X: 10, Y: 0, Z: 0},
+			fp1: Aviation.FlightPath{
+				Depature: Aviation.Coordinate{X: 0, Y: 0, Z: 0},
+				arrival:  Aviation.Coordinate{X: 10, Y: 0, Z: 0},
 			},
-			fp2: flightPath{
-				depature: coordinate{X: 0, Y: 0, Z: 0},
-				arrival:  coordinate{X: 10, Y: 0, Z: 0},
+			fp2: Aviation.FlightPath{
+				Depature: Aviation.Coordinate{X: 0, Y: 0, Z: 0},
+				arrival:  Aviation.Coordinate{X: 10, Y: 0, Z: 0},
 			},
-			wantFp1: coordinate{X: 0, Y: 0, Z: 0},
-			wantFp2: coordinate{X: 0, Y: 0, Z: 0},
+			wantFp1: Aviation.Coordinate{X: 0, Y: 0, Z: 0},
+			wantFp2: Aviation.Coordinate{X: 0, Y: 0, Z: 0},
 		},
 		{
 			name: "Collinear, Overlapping (Segment 1 contains Segment 2)",
-			fp1: flightPath{
-				depature: coordinate{X: 0, Y: 0, Z: 0},
-				arrival:  coordinate{X: 10, Y: 0, Z: 0},
+			fp1: Aviation.FlightPath{
+				Depature: Aviation.Coordinate{X: 0, Y: 0, Z: 0},
+				arrival:  Aviation.Coordinate{X: 10, Y: 0, Z: 0},
 			},
-			fp2: flightPath{
-				depature: coordinate{X: 2, Y: 0, Z: 0},
-				arrival:  coordinate{X: 8, Y: 0, Z: 0},
+			fp2: Aviation.FlightPath{
+				Depature: Aviation.Coordinate{X: 2, Y: 0, Z: 0},
+				arrival:  Aviation.Coordinate{X: 8, Y: 0, Z: 0},
 			},
-			wantFp1: coordinate{X: 2, Y: 0, Z: 0},
-			wantFp2: coordinate{X: 2, Y: 0, Z: 0},
+			wantFp1: Aviation.Coordinate{X: 2, Y: 0, Z: 0},
+			wantFp2: Aviation.Coordinate{X: 2, Y: 0, Z: 0},
 		},
 		{
 			name: "Collinear, Non-overlapping (Segment 1 before Segment 2)",
-			fp1: flightPath{
-				depature: coordinate{X: 0, Y: 0, Z: 0},
-				arrival:  coordinate{X: 5, Y: 0, Z: 0},
+			fp1: Aviation.FlightPath{
+				Depature: Aviation.Coordinate{X: 0, Y: 0, Z: 0},
+				arrival:  Aviation.Coordinate{X: 5, Y: 0, Z: 0},
 			},
-			fp2: flightPath{
-				depature: coordinate{X: 7, Y: 0, Z: 0},
-				arrival:  coordinate{X: 10, Y: 0, Z: 0},
+			fp2: Aviation.FlightPath{
+				Depature: Aviation.Coordinate{X: 7, Y: 0, Z: 0},
+				arrival:  Aviation.Coordinate{X: 10, Y: 0, Z: 0},
 			},
-			wantFp1: coordinate{X: 5, Y: 0, Z: 0},
-			wantFp2: coordinate{X: 7, Y: 0, Z: 0},
+			wantFp1: Aviation.Coordinate{X: 5, Y: 0, Z: 0},
+			wantFp2: Aviation.Coordinate{X: 7, Y: 0, Z: 0},
 		},
 		{
 			name: "Perpendicular, not intersecting, one endpoint is closest",
-			fp1: flightPath{
-				depature: coordinate{X: 0, Y: 0, Z: 0},
-				arrival:  coordinate{X: 5, Y: 0, Z: 0},
+			fp1: Aviation.FlightPath{
+				Depature: Aviation.Coordinate{X: 0, Y: 0, Z: 0},
+				arrival:  Aviation.Coordinate{X: 5, Y: 0, Z: 0},
 			},
-			fp2: flightPath{
-				depature: coordinate{X: 0, Y: 5, Z: 0},
-				arrival:  coordinate{X: 0, Y: 10, Z: 0},
+			fp2: Aviation.FlightPath{
+				Depature: Aviation.Coordinate{X: 0, Y: 5, Z: 0},
+				arrival:  Aviation.Coordinate{X: 0, Y: 10, Z: 0},
 			},
-			wantFp1: coordinate{X: 0, Y: 0, Z: 0},
-			wantFp2: coordinate{X: 0, Y: 5, Z: 0},
+			wantFp1: Aviation.Coordinate{X: 0, Y: 0, Z: 0},
+			wantFp2: Aviation.Coordinate{X: 0, Y: 5, Z: 0},
 		},
 	}
 
@@ -168,12 +170,12 @@ func TestGetClosestApproachDetails(t *testing.T) {
 		{
 			name: "Scenario 1: Direct Intersection (Mid-flight)",
 			flight1: flight{
-				flightSchedule: flightPath{depature: coordinate{0, 0, 0}, arrival: coordinate{100, 0, 0}},
+				flightSchedule: Aviation.FlightPath{Depature: Aviation.Coordinate{0, 0, 0}, arrival: Aviation.Coordinate{100, 0, 0}},
 				takeoffTime:    baseTime,
 				landingTime:    baseTime.Add(10 * time.Minute),
 			},
 			flight2: flight{
-				flightSchedule: flightPath{depature: coordinate{50, -50, 0}, arrival: coordinate{50, 50, 0}},
+				flightSchedule: Aviation.FlightPath{Depature: Aviation.Coordinate{50, -50, 0}, arrival: Aviation.Coordinate{50, 50, 0}},
 				takeoffTime:    baseTime,
 				landingTime:    baseTime.Add(10 * time.Minute),
 			},
@@ -183,12 +185,12 @@ func TestGetClosestApproachDetails(t *testing.T) {
 		{
 			name: "Scenario 2: Parallel Paths (Constant Distance)",
 			flight1: flight{
-				flightSchedule: flightPath{depature: coordinate{0, 0, 0}, arrival: coordinate{100, 0, 0}},
+				flightSchedule: Aviation.FlightPath{Depature: Aviation.Coordinate{0, 0, 0}, arrival: Aviation.Coordinate{100, 0, 0}},
 				takeoffTime:    baseTime,
 				landingTime:    baseTime.Add(10 * time.Minute),
 			},
 			flight2: flight{
-				flightSchedule: flightPath{depature: coordinate{0, 10, 0}, arrival: coordinate{100, 10, 0}},
+				flightSchedule: Aviation.FlightPath{Depature: Aviation.Coordinate{0, 10, 0}, arrival: Aviation.Coordinate{100, 10, 0}},
 				takeoffTime:    baseTime,
 				landingTime:    baseTime.Add(10 * time.Minute),
 			},
@@ -198,12 +200,12 @@ func TestGetClosestApproachDetails(t *testing.T) {
 		{
 			name: "Scenario 3: Closest Approach at Departure (Flight 1 starts near Flight 2)",
 			flight1: flight{
-				flightSchedule: flightPath{depature: coordinate{0, 0, 0}, arrival: coordinate{100, 0, 0}},
+				flightSchedule: Aviation.FlightPath{Depature: Aviation.Coordinate{0, 0, 0}, arrival: Aviation.Coordinate{100, 0, 0}},
 				takeoffTime:    baseTime,
 				landingTime:    baseTime.Add(10 * time.Minute),
 			},
 			flight2: flight{
-				flightSchedule: flightPath{depature: coordinate{5, 0, 0}, arrival: coordinate{101, 0, 0}},
+				flightSchedule: Aviation.FlightPath{Depature: Aviation.Coordinate{5, 0, 0}, arrival: Aviation.Coordinate{101, 0, 0}},
 				takeoffTime:    baseTime,
 				landingTime:    baseTime.Add(10 * time.Minute),
 			},
@@ -213,12 +215,12 @@ func TestGetClosestApproachDetails(t *testing.T) {
 		{
 			name: "Scenario 4: Closest Approach at Arrival (Flight 1 ends near Flight 2)",
 			flight1: flight{
-				flightSchedule: flightPath{depature: coordinate{0, 0, 0}, arrival: coordinate{100, 0, 0}},
+				flightSchedule: Aviation.FlightPath{Depature: Aviation.Coordinate{0, 0, 0}, arrival: Aviation.Coordinate{100, 0, 0}},
 				takeoffTime:    baseTime,
 				landingTime:    baseTime.Add(10 * time.Minute),
 			},
 			flight2: flight{
-				flightSchedule: flightPath{depature: coordinate{-100, 0, 0}, arrival: coordinate{0, 0, 0}},
+				flightSchedule: Aviation.FlightPath{Depature: Aviation.Coordinate{-100, 0, 0}, arrival: Aviation.Coordinate{0, 0, 0}},
 				takeoffTime:    baseTime,
 				landingTime:    baseTime.Add(10 * time.Minute),
 			},
@@ -228,12 +230,12 @@ func TestGetClosestApproachDetails(t *testing.T) {
 		{
 			name: "Scenario 5: Different Start Times, Same Intersection Point Geometrically",
 			flight1: flight{
-				flightSchedule: flightPath{depature: coordinate{0, 0, 0}, arrival: coordinate{100, 0, 0}},
+				flightSchedule: Aviation.FlightPath{Depature: Aviation.Coordinate{0, 0, 0}, arrival: Aviation.Coordinate{100, 0, 0}},
 				takeoffTime:    baseTime,
 				landingTime:    baseTime.Add(10 * time.Minute),
 			},
 			flight2: flight{
-				flightSchedule: flightPath{depature: coordinate{50, -50, 0}, arrival: coordinate{50, 50, 0}},
+				flightSchedule: Aviation.FlightPath{Depature: Aviation.Coordinate{50, -50, 0}, arrival: Aviation.Coordinate{50, 50, 0}},
 				takeoffTime:    baseTime.Add(2 * time.Minute),
 				landingTime:    baseTime.Add(12 * time.Minute),
 			},
@@ -243,12 +245,12 @@ func TestGetClosestApproachDetails(t *testing.T) {
 		{
 			name: "Scenario 7: Closest Approach Asymmetric (Near Start F1, Near End F2)",
 			flight1: flight{
-				flightSchedule: flightPath{depature: coordinate{0, 0, 0}, arrival: coordinate{100, 0, 0}},
+				flightSchedule: Aviation.FlightPath{Depature: Aviation.Coordinate{0, 0, 0}, arrival: Aviation.Coordinate{100, 0, 0}},
 				takeoffTime:    baseTime,
 				landingTime:    baseTime.Add(10 * time.Minute),
 			},
 			flight2: flight{
-				flightSchedule: flightPath{depature: coordinate{0, 100, 0}, arrival: coordinate{100, 100, 0}},
+				flightSchedule: Aviation.FlightPath{Depature: Aviation.Coordinate{0, 100, 0}, arrival: Aviation.Coordinate{100, 100, 0}},
 				takeoffTime:    baseTime,
 				landingTime:    baseTime.Add(10 * time.Minute),
 			},

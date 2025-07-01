@@ -1,24 +1,18 @@
 package aviation
 
 import (
-	"bufio"
-	"fmt"
 	"math/rand"
-	"os"
-	"strconv"
-
-	"github.com/josephus-git/TCAS-simulation/internal/config"
 )
 
-type plane struct {
+type Plane struct {
 	serial        string
 	planeInFlight bool
 	cruiseSpeed   float64
 	flightLog     []Flight
 }
 
-func createPlane(planeCount int) plane {
-	return plane{
+func createPlane(planeCount int) Plane {
+	return Plane{
 		serial:        generateSerialNumber(planeCount, "p"),
 		planeInFlight: false,
 		cruiseSpeed:   0.1,
@@ -54,30 +48,4 @@ func generatePlaneCapacity(totalPlanes, planeGenerated int) int {
 
 	}
 	return randomNumber
-}
-
-func getNumberPlanes(conf *config.Config) {
-	scanner := bufio.NewScanner(os.Stdin)
-	fmt.Println("Welcome to TCAS-simulator")
-	notValidInput := true
-
-	for i := 0; notValidInput; i++ {
-
-		fmt.Print("Input the number of planes for the simulation > ")
-		scanner.Scan()
-		input := cleanInput(scanner.Text())
-		num, err := strconv.Atoi(input[0])
-		if err != nil {
-			fmt.Println("Please input a valid integer")
-			continue
-		}
-		if num < 2 {
-			fmt.Println("Please input a valid integer greater than 1")
-			continue
-		}
-
-		conf.noOfAirplanes = num
-		notValidInput = false
-	}
-
 }

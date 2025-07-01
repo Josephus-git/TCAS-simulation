@@ -14,6 +14,6 @@ type Flight struct {
 
 // FlightPath to store the movement of plane from one location to the other
 type FlightPath struct {
-	depature Coordinate
-	arrival  Coordinate
+	Depature Coordinate
+	Arrival  Coordinate
 }
