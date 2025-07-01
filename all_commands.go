@@ -2,10 +2,9 @@ package main
 
 import (
 	"fmt"
+	"internal/config"
 	"log"
 	"os"
-
-	"internal/config"
 )
 
 type cliCommand struct {
