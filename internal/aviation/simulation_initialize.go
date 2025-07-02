@@ -7,6 +7,7 @@ import (
 	"math/rand"
 	"os"
 	"strconv"
+	"sync"
 	"time"
 
 	"github.com/josephus-git/TCAS-simulation/internal/config"
@@ -15,14 +16,9 @@ import (
 
 // SimulationState holds the collection of live domain objects and their current state
 type SimulationState struct {
-	Airports       []Airport
+	Airports       []*Airport
 	PlanesInFlight []Plane
-}
-
-// Coordinate represents a 3D Coordinate
-// may be changed to latitude logitude altitude
-type Coordinate struct {
-	X, Y, Z float64
+	mu             sync.Mutex
 }
 
 // GetNumberOfPlanes prompts the user to input the desired number of planes for the simulation.

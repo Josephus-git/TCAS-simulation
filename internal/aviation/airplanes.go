@@ -3,7 +3,6 @@ package aviation
 import (
 	"fmt"
 	"math"
-	"math/rand"
 	"time"
 
 	"github.com/josephus-git/TCAS-simulation/internal/util"
@@ -22,41 +21,9 @@ func createPlane(planeCount int) Plane {
 	return Plane{
 		Serial:        util.GenerateSerialNumber(planeCount, "p"),
 		PlaneInFlight: false,
-		CruiseSpeed:   0.1,
+		CruiseSpeed:   5,
 		FlightLog:     []Flight{},
 	}
-}
-
-// generatePlaneCapacity calculates a random number of planes to create,
-// adjusting the quantity based on the total target and already generated planes.
-func generatePlaneCapacity(totalPlanes, planeGenerated int) int {
-	var randomNumber int
-	if totalPlanes < 20 {
-		planeToCreate := totalPlanes - planeGenerated
-		if planeToCreate <= 3 {
-			randomNumber = planeToCreate
-		} else {
-			randomNumber = rand.Intn(2) + 1
-		}
-
-	} else if totalPlanes < 100 {
-		planeToCreate := totalPlanes - planeGenerated
-		if planeToCreate <= 6 {
-			randomNumber = planeToCreate
-		} else {
-			randomNumber = rand.Intn(5) + 1
-		}
-
-	} else {
-		planeToCreate := totalPlanes - planeGenerated
-		if planeToCreate <= 30 {
-			randomNumber = planeToCreate
-		} else {
-			randomNumber = rand.Intn(20) + 10
-		}
-
-	}
-	return randomNumber
 }
 
 // getPlanePosition calculates the plane's interpolated coordinates (X, Y, Z) at a given time during a specific flight.

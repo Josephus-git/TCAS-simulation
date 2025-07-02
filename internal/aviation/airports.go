@@ -2,6 +2,8 @@ package aviation
 
 import (
 	"fmt"
+	"math/rand"
+	"sync"
 
 	"github.com/josephus-git/TCAS-simulation/internal/config"
 	"github.com/josephus-git/TCAS-simulation/internal/util"
@@ -14,6 +16,7 @@ type Airport struct {
 	PlaneCapacity int
 	Runway        runway
 	Planes        []Plane
+	mu            sync.Mutex
 }
 
 // runway represents the state of an airport's runways.
@@ -36,8 +39,8 @@ func InitializeAirports(conf *config.Config, simState *SimulationState) {
 			newAirport.Planes = append(newAirport.Planes, newPlane)
 			planesGenerated += 1
 		}
+		simState.Airports = append(simState.Airports, &newAirport)
 		planesCreated += newAirport.PlaneCapacity
-		simState.Airports = append(simState.Airports, newAirport)
 		airportsCreated = i + 1
 	}
 
@@ -63,8 +66,41 @@ func createAirport(airportCount, planecount, totalNumPlanes int) Airport {
 
 // generateRunway creates and returns a new runway configuration.
 func generateRunway() runway {
+	randomNumber := rand.Intn(3) + 1
 	return runway{
-		numberOfRunway:  1,
+		numberOfRunway:  randomNumber,
 		noOfRunwayinUse: 0,
 	}
+}
+
+// generatePlaneCapacity calculates a random number of planes to create,
+// adjusting the quantity based on the total target and already generated planes.
+func generatePlaneCapacity(totalPlanes, planeGenerated int) int {
+	var randomNumber int
+	if totalPlanes < 20 {
+		planeToCreate := totalPlanes - planeGenerated
+		if planeToCreate <= 3 {
+			randomNumber = planeToCreate
+		} else {
+			randomNumber = rand.Intn(2) + 1
+		}
+
+	} else if totalPlanes < 100 {
+		planeToCreate := totalPlanes - planeGenerated
+		if planeToCreate <= 6 {
+			randomNumber = planeToCreate
+		} else {
+			randomNumber = rand.Intn(5) + 1
+		}
+
+	} else {
+		planeToCreate := totalPlanes - planeGenerated
+		if planeToCreate <= 30 {
+			randomNumber = planeToCreate
+		} else {
+			randomNumber = rand.Intn(20) + 10
+		}
+
+	}
+	return randomNumber
 }

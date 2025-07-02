@@ -32,7 +32,7 @@ func getCommand(simState *aviation.SimulationState, argument2 string) map[string
 			name:        "start",
 			description: "Initializes and starts the application",
 			callback: func() error {
-				return startSimulation()
+				return startSimulationInit(simState, durationMinutes)
 			},
 		},
 		"get": {

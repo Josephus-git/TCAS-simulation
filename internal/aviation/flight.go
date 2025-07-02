@@ -1,6 +1,8 @@
 package aviation
 
-import "time"
+import (
+	"time"
+)
 
 // Flight represents a single flight from departure to arrival
 // *** implement the climb / decent

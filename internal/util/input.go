@@ -21,7 +21,7 @@ func CleanInput(text string) []string {
 func ResetLog() {
 	filesToDelete := []string{
 		"logs/airportDetails.txt",
-		"logs/airPlaneDetails.txt",
+		"logs/airplaneDetails.txt",
 		"logs/flightDetails.txt",
 	}
 

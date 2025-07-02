@@ -1,0 +1,28 @@
+Calling the TakeOff function:
+The requirement "all the airports to randomly launch plane after 5 to 10 seconds" implies that your main simulation loop (or a separate goroutine for each airport) will be responsible for:
+
+Waiting for a random duration (5-10 seconds).
+
+Selecting a plane from the airport's Planes list.
+
+Calling airport.TakeOff(selectedPlane, &simulationState).
+
+Handling any errors returned by TakeOff.
+// Inside your main simulation loop or a goroutine per airport:
+// This is pseudo-code to illustrate how TakeOff would be used.
+for _, airport := range simState.Airports {
+    go func(ap *aviation.Airport) {
+        for {
+            time.Sleep(time.Duration(rand.Intn(6)+5) * time.Second) // Wait 5-10 seconds
+            if len(ap.Planes) > 0 {
+                planeToTakeOff := ap.Planes[0] // Pick the first available plane for simplicity
+                _, err := ap.TakeOff(planeToTakeOff, &simState)
+                if err != nil {
+                    fmt.Printf("Error taking off from %s: %v\n", ap.Serial, err)
+                }
+            } else {
+                // fmt.Printf("Airport %s has no planes to take off.\n", ap.Serial)
+            }
+        }
+    }(airport)
+}

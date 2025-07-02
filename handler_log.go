@@ -27,7 +27,7 @@ func logDetails(simState *aviation.SimulationState, argument2 string) error {
 // logAirplanesDetails appends selected details of all airplanes from the simulation state to a log file.
 // It includes serial, flight status, cruise speed, and a count of flights for each plane.
 func logAirplanesDetails(simState *aviation.SimulationState) {
-	logFilePath := "logs/airPlaneDetails.txt"
+	logFilePath := "logs/airplaneDetails.txt"
 	// Open the file in append mode. Create it if it doesn't exist.
 	f, err := os.OpenFile(logFilePath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 	if err != nil {
@@ -39,7 +39,7 @@ func logAirplanesDetails(simState *aviation.SimulationState) {
 	for _, ap := range simState.Airports {
 		Planes = append(Planes, ap.Planes...)
 	}
-	fmt.Println("\n--- Logging selected fields for each plane ---")
+	fmt.Fprintln(f, "\n--- Logging selected fields for each plane ---")
 	for i, p := range Planes {
 		fmt.Fprintf(f, "Plane %d (Serial: %s):\n", i+1, p.Serial)
 		fmt.Fprintf(f, "  In Flight: %t\n", p.PlaneInFlight)
@@ -54,12 +54,13 @@ func logAirplanesDetails(simState *aviation.SimulationState) {
 		}
 		fmt.Fprintln(f, "-------------------------------------------")
 	}
+	fmt.Println("Successfully logged airplanes")
 }
 
 // logAirportDetails appends selected details of all airports from the simulation state to a log file.
 // It includes serial, location, plane capacity, runway information, and a list of associated plane serials.
 func logAirportDetails(simState *aviation.SimulationState) {
-	logFilePath := "logs/airPortDetails.txt"
+	logFilePath := "logs/airportDetails.txt"
 	// Open the file in append mode. Create it if it doesn't exist.
 	f, err := os.OpenFile(logFilePath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 	if err != nil {
@@ -82,4 +83,5 @@ func logAirportDetails(simState *aviation.SimulationState) {
 		}
 		fmt.Fprintln(f, "-------------------------------------------")
 	}
+	fmt.Println("Successfully logged airplanes")
 }
