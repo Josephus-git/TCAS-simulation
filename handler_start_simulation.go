@@ -89,9 +89,11 @@ func startSimulation(simState *aviation.SimulationState, durationMinutes time.Du
 
 			select {
 			case <-time.After(FlightMonitorInterval):
+				// This case executes if the FlightMonitorInterval duration passes.
 			case <-ctx.Done():
+				// This case executes if the context (ctx) is cancelled.
 				log.Printf("Flight monitor stopping during sleep.")
-				return
+				return // Exits the goroutine immediately.
 			}
 
 			time.Sleep(FlightMonitorInterval) // Sleep to avoid busy-waiting and reduce CPU usage
