@@ -38,10 +38,8 @@ func start() {
 			fmt.Println("Unknown command, type <help> for usage")
 			continue
 		}
-		err := cmd.callback()
-		if err != nil {
-			fmt.Printf("Error: %v\n", err)
-		}
+		cmd.callback()
+
 		println("")
 
 	}

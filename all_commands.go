@@ -8,7 +8,7 @@ import (
 type cliCommand struct {
 	name        string
 	description string
-	callback    func() error
+	callback    func()
 }
 
 // getCommand returns a map of available CLI commands for the TCAS-simulator.
@@ -17,36 +17,36 @@ func getCommand(simState *aviation.SimulationState, argument2 string) map[string
 		"exit": {
 			name:        "exit",
 			description: "Exit the TCAS-simulator",
-			callback: func() error {
-				return commandExit()
+			callback: func() {
+				commandExit()
 			},
 		},
 		"help": {
 			name:        "help",
 			description: "Display usage of the application",
-			callback: func() error {
-				return helpFunc(simState, argument2)
+			callback: func() {
+				helpFunc(simState, argument2)
 			},
 		},
 		"start": {
 			name:        "start",
 			description: "Initializes and starts the application",
-			callback: func() error {
-				return startSimulationInit(simState, durationMinutes)
+			callback: func() {
+				startInit(simState, argument2)
 			},
 		},
 		"get": {
 			name:        "get",
 			description: "prints details of the simulation such as airports, Planes and flights to the console",
-			callback: func() error {
-				return getDetails(simState, argument2)
+			callback: func() {
+				getDetails(simState, argument2)
 			},
 		},
 		"log": {
 			name:        "log",
 			description: "logs details of the simulation such as airports, Planes and flights to an appropriate file",
-			callback: func() error {
-				return logDetails(simState, argument2)
+			callback: func() {
+				logDetails(simState, argument2)
 			},
 		},
 	}

@@ -6,8 +6,7 @@ import (
 )
 
 // commandExit prints a farewell message and terminates the application.
-func commandExit() error {
+func commandExit() {
 	fmt.Println("Closing TCAS-simulator... Goodbye!")
 	os.Exit(0)
-	return nil
 }

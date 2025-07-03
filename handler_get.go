@@ -8,7 +8,7 @@ import (
 
 // getDetails displays specific simulation details (airports, airplanes, or flights) based on the provided argument.
 // It prints usage instructions if an invalid option is given.
-func getDetails(simState *aviation.SimulationState, argument2 string) error {
+func getDetails(simState *aviation.SimulationState, argument2 string) {
 	switch argument2 {
 	case "airports":
 		getAirportDetails(simState)
@@ -19,7 +19,6 @@ func getDetails(simState *aviation.SimulationState, argument2 string) error {
 	default:
 		fmt.Println("usage: get <option>, options: airports, airplanes, flights")
 	}
-	return nil
 }
 
 // getAirPlanesDetails prints selected details of all airplanes from the simulation state to the console.

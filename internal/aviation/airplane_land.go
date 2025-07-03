@@ -37,15 +37,15 @@ func (ap *Airport) Land(plane Plane, simState *SimulationState) error {
 
 	// 2. Verify that this airport is the plane's intended destination.
 	// We use the 'distance' function with an Epsilon to account for floating-point inaccuracies.
-	if distance(ap.Location, currentFlight.FlightSchedule.Arrival) > Epsilon {
+	if Distance(ap.Location, currentFlight.FlightSchedule.Arrival) > Epsilon {
 		return fmt.Errorf("plane %s attempting to land at airport %s (%s), but its destination for current flight %s is %s",
 			plane.Serial, ap.Serial, ap.Location.String(), currentFlight.FlightID, currentFlight.FlightSchedule.Arrival.String())
 	}
 
 	// Acquire the airport's mutex lock. This protects the runway state and other
 	// airport-specific shared resources during the critical landing operation.
-	ap.mu.Lock()
-	defer ap.mu.Unlock() // Ensure the lock is released when the function exits
+	ap.Mu.Lock()
+	defer ap.Mu.Unlock() // Ensure the lock is released when the function exits
 
 	// 3. Strict Runway Availability Check: No landing can occur
 	//    if ANY runway at this airport is currently in use.

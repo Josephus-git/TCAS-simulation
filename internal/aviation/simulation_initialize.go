@@ -18,7 +18,7 @@ import (
 type SimulationState struct {
 	Airports       []*Airport
 	PlanesInFlight []Plane
-	mu             sync.Mutex
+	Mu             sync.Mutex
 }
 
 // GetNumberOfPlanes prompts the user to input the desired number of planes for the simulation.

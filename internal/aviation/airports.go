@@ -16,7 +16,7 @@ type Airport struct {
 	PlaneCapacity int
 	Runway        runway
 	Planes        []Plane
-	mu            sync.Mutex
+	Mu            sync.Mutex
 }
 
 // runway represents the state of an airport's runways.

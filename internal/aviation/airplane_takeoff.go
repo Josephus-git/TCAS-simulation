@@ -29,17 +29,17 @@ const TakeoffDuration = 5 * time.Second
 //	error: An error if the takeoff cannot be initiated (e.g., no available runways, plane not found).
 func (ap *Airport) TakeOff(plane Plane, simState *SimulationState) (*Flight, error) {
 	// Acquire a lock only for checking/updating runway count
-	ap.mu.Lock()
+	ap.Mu.Lock()
 
 	// Check if there's an available runway.
 	if ap.Runway.noOfRunwayinUse >= ap.Runway.numberOfRunway {
-		ap.mu.Unlock() // Release lock immediately if no runway
+		ap.Mu.Unlock() // Release lock immediately if no runway
 		return nil, fmt.Errorf("airport %s has no available runways for takeoff (all %d in use)", ap.Serial, ap.Runway.numberOfRunway)
 	}
 
 	// Mark a runway as in use.
 	ap.Runway.noOfRunwayinUse++
-	ap.mu.Unlock() // <<< IMPORTANT: Release the lock BEFORE the 3-second sleep
+	ap.Mu.Unlock() // <<< IMPORTANT: Release the lock BEFORE the 3-second sleep
 
 	// Simulate the physical takeoff duration. This does NOT hold the lock.
 	// This allows other planes to acquire the lock and potentially start taking off
@@ -47,9 +47,9 @@ func (ap *Airport) TakeOff(plane Plane, simState *SimulationState) (*Flight, err
 	time.Sleep(TakeoffDuration)
 
 	// After the takeoff duration, re-acquire the lock to safely decrement the counter.
-	ap.mu.Lock()
+	ap.Mu.Lock()
 	ap.Runway.noOfRunwayinUse--
-	ap.mu.Unlock() // Release the lock after updating
+	ap.Mu.Unlock() // Release the lock after updating
 
 	// Find and remove the plane from this airport's list of parked planes.
 	planeIndex := -1
@@ -80,7 +80,7 @@ func (ap *Airport) TakeOff(plane Plane, simState *SimulationState) (*Flight, err
 	}
 
 	// Calculate the total distance and estimated flight duration.
-	flightDistance := distance(flightPath.Depature, flightPath.Arrival)
+	flightDistance := Distance(flightPath.Depature, flightPath.Arrival)
 	if plane.CruiseSpeed <= 0 {
 		return nil, fmt.Errorf("plane %s has an invalid cruise speed (%.2f), cannot calculate flight duration", plane.Serial, plane.CruiseSpeed)
 	}

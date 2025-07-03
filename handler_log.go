@@ -10,7 +10,7 @@ import (
 
 // logDetails logs specific simulation details (airports, airplanes, or flights) based on the provided argument.
 // It prints usage instructions if an invalid option is given.
-func logDetails(simState *aviation.SimulationState, argument2 string) error {
+func logDetails(simState *aviation.SimulationState, argument2 string) {
 	switch argument2 {
 	case "airports":
 		logAirportDetails(simState)
@@ -21,7 +21,6 @@ func logDetails(simState *aviation.SimulationState, argument2 string) error {
 	default:
 		fmt.Println("usage: log <option>, options: airports, airplanes, flights")
 	}
-	return nil
 }
 
 // logAirplanesDetails appends selected details of all airplanes from the simulation state to a log file.
