@@ -16,9 +16,10 @@ import (
 
 // SimulationState holds the collection of live domain objects and their current state
 type SimulationState struct {
-	Airports       []*Airport
-	PlanesInFlight []Plane
-	Mu             sync.Mutex
+	Airports         []*Airport
+	PlanesInFlight   []Plane
+	Mu               sync.Mutex
+	SimStatusChannel chan struct{}
 }
 
 // GetNumberOfPlanes prompts the user to input the desired number of planes for the simulation.

@@ -51,7 +51,8 @@ func InitializeAirports(conf *config.Config, simState *SimulationState) {
 		simState.Airports[i].Location = newLocation
 	}
 
-	fmt.Printf("planes created: %d\n", conf.NoOfAirplanes)
+	fmt.Printf("Initialized: %d airports, %d planes distributed among airports.\n",
+		len(simState.Airports), conf.NoOfAirplanes)
 }
 
 // createAirport initializes and returns a new Airport struct.

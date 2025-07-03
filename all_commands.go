@@ -32,7 +32,7 @@ func getCommand(simState *aviation.SimulationState, argument2 string) map[string
 			name:        "start",
 			description: "Initializes and starts the application",
 			callback: func() {
-				startInit(simState, argument2)
+				go startInit(simState, argument2)
 			},
 		},
 		"get": {
@@ -47,6 +47,13 @@ func getCommand(simState *aviation.SimulationState, argument2 string) map[string
 			description: "logs details of the simulation such as airports, Planes and flights to an appropriate file",
 			callback: func() {
 				logDetails(simState, argument2)
+			},
+		},
+		"q": {
+			name:        "emergency stop",
+			description: "stops the simulation immediately if the simulation is running",
+			callback: func() {
+				emergencyStop(simState)
 			},
 		},
 	}

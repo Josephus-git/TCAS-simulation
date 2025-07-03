@@ -19,7 +19,9 @@ func main() {
 func start() {
 	scanner := bufio.NewScanner(os.Stdin)
 	initialize := &config.Config{}
-	simState := &aviation.SimulationState{}
+	simState := &aviation.SimulationState{
+		SimStatusChannel: make(chan struct{}),
+	}
 
 	aviation.GetNumberOfPlanes(initialize)
 	aviation.InitializeAirports(initialize, simState)

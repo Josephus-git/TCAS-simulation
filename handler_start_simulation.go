@@ -12,8 +12,8 @@ import (
 	"github.com/josephus-git/TCAS-simulation/internal/aviation"
 )
 
-// startInit parses the duration string and initializes the simulation.
-// Handles input validation, ensuring a positive integer for simulation duration.
+// startInit parses the duration string and initializes the simulation,
+// handles input validation, ensuring a positive integer for simulation duration.
 func startInit(simState *aviation.SimulationState, durationMinutesString string) {
 	durationMinutes, err := strconv.Atoi(durationMinutesString)
 	if err != nil {
@@ -24,7 +24,7 @@ func startInit(simState *aviation.SimulationState, durationMinutesString string)
 		fmt.Println("Please input a valid integer greater than 0")
 		return
 	}
-	startSimulationInit(simState, time.Duration(durationMinutes))
+	startSimulation(simState, time.Duration(durationMinutes))
 }
 
 // Simulation parameters
@@ -38,25 +38,42 @@ const AirportLaunchIntervalMax = 10 * time.Second
 // FlightMonitorInterval is how often the monitor checks planes for landing time
 const FlightMonitorInterval = 500 * time.Millisecond
 
+// simulationCancelFunc is a global variable to hold the cancel function for the simulation context,
+// this allows EmergencyStop to trigger cancellation of the simulation from anywhere
+var simulationCancelFunc context.CancelFunc
+
 // startSimulationInit initializes and starts the TCAS simulation, managing goroutines for takeoffs and landings.
 // It sets up a context for graceful shutdown and waits for all simulation activities to complete.
-func startSimulationInit(simState *aviation.SimulationState, durationMinutes time.Duration) {
+func startSimulation(simState *aviation.SimulationState, durationMinutes time.Duration) {
+	defer close(simState.SimStatusChannel) // Ensures SimStatuschannel is closed when startSimulation function exits
 	log.Printf("--- TCAS Simulation Started for %d minutes ---", durationMinutes)
 
 	// WaitGroup to keep track of running goroutines
 	var wg sync.WaitGroup
 
-	// Context for graceful shutdown of goroutines after SimulationDuration
+	// Create a cancellable context for the simulation.
+	// This context will be passed to all goroutines.
+	// The cancel function is stored globally and also called when the duration expires.
+	var ctx context.Context
 	simulationDuration := time.Duration(durationMinutes) * time.Minute
-	ctx, cancel := context.WithTimeout(context.Background(), simulationDuration)
-	defer cancel() // Ensure cancel is called when Start() exits
+	ctx, simulationCancelFunc = context.WithCancel(context.Background())
+
+	// Set a timer to automatically call cancel after the specified duration.
+	// This ensures the simulation stops even if EmergencyStop is not called.
+	time.AfterFunc(simulationDuration, func() {
+		log.Printf("\n--- Simulation Duration (%d minutes) Reached. Initiating shutdown... ---", durationMinutes)
+		if simulationCancelFunc != nil {
+			simulationCancelFunc() // Trigger cancellation
+		}
+
+	})
 
 	// Start the takeoff simulation (using your provided startSimulation function)
 	// Pass ctx and wg to startSimulation so airport goroutines can respect shutdown
-	startSimulation(simState, ctx, &wg)
+	startAirports(simState, ctx, &wg)
 
 	// --- Start Flight Monitoring Goroutine (for landings) ---
-	log.Printf("\n--- Starting Flight Landing Monitor ---")
+	log.Printf("--- Starting Flight Landing Monitor ---")
 	wg.Add(1) // Add for the monitor goroutine
 	go func(globalSimState *aviation.SimulationState, ctx context.Context) {
 		defer wg.Done()
@@ -68,6 +85,13 @@ func startSimulationInit(simState *aviation.SimulationState, durationMinutes tim
 				return // Exit goroutine
 			default:
 				// Continue monitoring
+			}
+
+			select {
+			case <-time.After(FlightMonitorInterval):
+			case <-ctx.Done():
+				log.Printf("Flight monitor stopping during sleep.")
+				return
 			}
 
 			time.Sleep(FlightMonitorInterval) // Sleep to avoid busy-waiting and reduce CPU usage
@@ -93,6 +117,13 @@ func startSimulationInit(simState *aviation.SimulationState, durationMinutes tim
 
 			// Process the planes that are ready to land
 			for _, p := range planesToLand {
+				select {
+				case <-ctx.Done():
+					log.Printf("Flight monitor stopping while processing planes.")
+					return
+				default:
+				}
+
 				// Find the corresponding destination airport object
 				currentFlight := p.FlightLog[len(p.FlightLog)-1]
 				var destinationAirport *aviation.Airport = nil
@@ -121,8 +152,7 @@ func startSimulationInit(simState *aviation.SimulationState, durationMinutes tim
 		}
 	}(simState, ctx)
 
-	// Wait for all goroutines (airport launchers and flight monitor) to finish.
-	// This will happen when ctx.Done() is closed after simulationDuration.
+	// This wg.Wait() will block Start() until all goroutines have gracefully exited
 	wg.Wait()
 
 	log.Printf("\n--- All simulation goroutines have stopped. ---")
@@ -140,8 +170,8 @@ func startSimulationInit(simState *aviation.SimulationState, durationMinutes tim
 	log.Printf("--- TCAS Simulation Ended ---")
 }
 
-// startSimulation launches goroutines for each airport to handle takeoffs.
-func startSimulation(simState *aviation.SimulationState, ctx context.Context, wg *sync.WaitGroup) {
+// startAirports launches goroutines for each airport to handle takeoffs.
+func startAirports(simState *aviation.SimulationState, ctx context.Context, wg *sync.WaitGroup) {
 	log.Printf("--- Starting Airport Launch Operations ---")
 	for i := range simState.Airports {
 		ap := simState.Airports[i] // Get a pointer to the airport
@@ -159,7 +189,13 @@ func startSimulation(simState *aviation.SimulationState, ctx context.Context, wg
 					// Continue operation
 				}
 
-				time.Sleep(time.Duration(airportRand.Intn(int(AirportLaunchIntervalMax.Seconds()-AirportLaunchIntervalMin.Seconds())+1)+int(AirportLaunchIntervalMin.Seconds())) * time.Second) // Wait 5-10 seconds
+				sleepDuration := time.Duration(airportRand.Intn(int(AirportLaunchIntervalMax.Seconds()-AirportLaunchIntervalMin.Seconds())+1)+int(AirportLaunchIntervalMin.Seconds())) * time.Second //wait 5 to 10 seconds
+				select {
+				case <-time.After(sleepDuration):
+				case <-ctx.Done():
+					log.Printf("Airport %s stopping launch operations during sleep.", airport.Serial)
+					return
+				}
 
 				airport.Mu.Lock() // Lock airport to safely check and pick a plane
 				if len(airport.Planes) > 0 {
