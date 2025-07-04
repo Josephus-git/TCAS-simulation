@@ -18,13 +18,15 @@ func main() {
 // start initializes the TCAS simulator, loads configurations, and enters a continuous command-line interaction loop.
 func start() {
 	scanner := bufio.NewScanner(os.Stdin)
-	initialize := &config.Config{}
+	initialize := &config.Config{
+		IsRunning: true,
+	}
 	simState := &aviation.SimulationState{}
 
 	aviation.GetNumberOfPlanes(initialize)
 	aviation.InitializeAirports(initialize, simState)
 
-	for {
+	for i := 0; initialize.IsRunning; i++ {
 		fmt.Print("TCAS-simulator > ")
 		scanner.Scan()
 		input := util.CleanInput(scanner.Text())
@@ -38,7 +40,7 @@ func start() {
 			continue
 		}
 
-		cmd, ok := getCommand(simState, argument2)[input[0]]
+		cmd, ok := getCommand(initialize, simState, argument2)[input[0]]
 		if !ok {
 			fmt.Println("Unknown command, type <help> for usage")
 			continue
@@ -46,6 +48,6 @@ func start() {
 		cmd.callback()
 
 		println("")
-
 	}
+	restartApplication()
 }

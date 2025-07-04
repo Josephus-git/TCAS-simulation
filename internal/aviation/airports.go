@@ -52,7 +52,7 @@ func InitializeAirports(conf *config.Config, simState *SimulationState) {
 		simState.Airports[i].Location = newLocation
 	}
 
-	fmt.Printf("Initialized: %d airports, %d planes distributed among airports.\n",
+	fmt.Printf("\nInitialized: %d airports, %d planes distributed among airports.\n\n",
 		len(simState.Airports), conf.NoOfAirplanes)
 }
 

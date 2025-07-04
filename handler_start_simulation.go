@@ -17,7 +17,7 @@ import (
 func startInit(simState *aviation.SimulationState, durationMinutesString string) {
 	durationMinutes, err := strconv.Atoi(durationMinutesString)
 	if err != nil {
-		fmt.Println("usage: start <integer> (integer represents time in minutes)")
+		fmt.Println("usage: start <integer> (integer represents time in minute(s))")
 		return
 	}
 	if durationMinutes < 1 {
@@ -36,7 +36,7 @@ func startInit(simState *aviation.SimulationState, durationMinutesString string)
 const AirportLaunchIntervalMin = 5 * time.Second
 
 // AirportLaunchIntervalMax is the max random delay before an airport tries to launch a plane
-const AirportLaunchIntervalMax = 10 * time.Second
+const AirportLaunchIntervalMax = 60 * time.Second
 
 // FlightMonitorInterval is how often the monitor checks planes for landing time
 const FlightMonitorInterval = 500 * time.Millisecond
@@ -58,7 +58,7 @@ func startSimulation(simState *aviation.SimulationState, durationMinutes time.Du
 	defer func() { simState.SimStatus = false }()
 	defer func() { simState.SimEndedTime = time.Now() }()
 	defer func() { fmt.Print("\nTCAS-simulator > ") }()
-	log.Printf("\n--- TCAS Simulation Started for %d minutes ---", durationMinutes)
+	log.Printf("\n--- TCAS Simulation Started for %d minute(s) ---", durationMinutes)
 	fmt.Printf("To initiate an emergency stop, type 'q' and press Enter.\n\n")
 
 	// WaitGroup to keep track of running goroutines
