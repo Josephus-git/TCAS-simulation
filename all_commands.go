@@ -51,7 +51,7 @@ func getCommand(simState *aviation.SimulationState, argument2 string) map[string
 		},
 		"q": {
 			name:        "emergency stop",
-			description: "stops the simulation immediately if the simulation is running",
+			description: "Immediately halts the active simulation.",
 			callback: func() {
 				emergencyStop(simState)
 			},

@@ -20,6 +20,8 @@ type SimulationState struct {
 	PlanesInFlight   []Plane
 	Mu               sync.Mutex
 	SimStatusChannel chan struct{}
+	SimStatus        bool
+	SimEndedTime     time.Time
 }
 
 // GetNumberOfPlanes prompts the user to input the desired number of planes for the simulation.
@@ -34,6 +36,10 @@ func GetNumberOfPlanes(conf *config.Config) {
 		fmt.Print("Input the number of planes for the simulation > ")
 		scanner.Scan()
 		input := util.CleanInput(scanner.Text())
+		if len(input) == 0 {
+			fmt.Println("")
+			continue
+		}
 		num, err := strconv.Atoi(input[0])
 		if err != nil {
 			fmt.Println("Please input a valid integer")

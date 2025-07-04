@@ -2,11 +2,12 @@ package aviation
 
 import (
 	"fmt"
+	"log"
 	"time"
 )
 
 // LandingDuration defines how long a landing operation physically lasts.
-const LandingDuration = 3 * time.Second
+const LandingDuration = 7 * time.Second
 
 // Epsilon is a small value used for floating-point comparisons,
 // particularly when checking if coordinates are approximately equal.
@@ -28,18 +29,43 @@ const Epsilon = 0.1 // meters, adjust as needed for precision of coordinates
 //	error: An error if the landing cannot proceed (e.g., wrong destination,
 //	       runways are currently in use, or the plane is not found in flight).
 func (ap *Airport) Land(plane Plane, simState *SimulationState) error {
-	// 1. Retrieve the current flight details from the plane's log.
+	log.Printf("Plane %s is attempting to land at Airport %s (%s).\n\n",
+		plane.Serial, ap.Serial, ap.Location.String())
+
+	// first we run a loop to make sure a plane is not trying to land in an airport where
+	// another airplane is trying to take off
+	for i := 0; ap.Runway.noOfRunwayinUse > 0 && simState.SimStatus; i++ {
+		log.Printf("\nairport %s has %d runway(s) currently in use; plane %s cannot land until all runways are free\n\n",
+			ap.Serial, ap.Runway.noOfRunwayinUse, plane.Serial)
+		time.Sleep(TakeoffDuration)
+	}
+	log.Printf("Plane %s is now landing at Airport %s (%s).\n\n",
+		plane.Serial, ap.Serial, ap.Location.String())
+
+	// Mark a runway as in use for the landing.
+	// This lock the runway so no plane can take off for the landing duration
+
+	ap.Mu.Lock()
+	ap.Runway.noOfRunwayinUse++
+	ap.ReceivingPlane = true
+	ap.Mu.Unlock()
+	defer func() { ap.ReceivingPlane = false }()
+	time.Sleep(LandingDuration)
+
+	// Retrieve the current flight details from the plane's log.
 	if len(plane.FlightLog) == 0 {
 		return fmt.Errorf("plane %s has no flight history; cannot initiate landing", plane.Serial)
 	}
 	// Get the most recent flight from the log.
 	currentFlight := plane.FlightLog[len(plane.FlightLog)-1]
 
-	// 2. Verify that this airport is the plane's intended destination.
+	plane.FlightLog[len(plane.FlightLog)-1].FlightStatus = "about to land"
+
+	// Verify that this airport is the plane's intended destination.
 	// We use the 'distance' function with an Epsilon to account for floating-point inaccuracies.
-	if Distance(ap.Location, currentFlight.FlightSchedule.Arrival) > Epsilon {
+	if Distance(ap.Location, currentFlight.FlightSchedule.Destination) > Epsilon {
 		return fmt.Errorf("plane %s attempting to land at airport %s (%s), but its destination for current flight %s is %s",
-			plane.Serial, ap.Serial, ap.Location.String(), currentFlight.FlightID, currentFlight.FlightSchedule.Arrival.String())
+			plane.Serial, ap.Serial, ap.Location.String(), currentFlight.FlightID, currentFlight.FlightSchedule.Destination.String())
 	}
 
 	// Acquire the airport's mutex lock. This protects the runway state and other
@@ -47,22 +73,9 @@ func (ap *Airport) Land(plane Plane, simState *SimulationState) error {
 	ap.Mu.Lock()
 	defer ap.Mu.Unlock() // Ensure the lock is released when the function exits
 
-	// 3. Strict Runway Availability Check: No landing can occur
-	//    if ANY runway at this airport is currently in use.
-	if ap.Runway.noOfRunwayinUse > 0 {
-		return fmt.Errorf("airport %s has %d runway(s) currently in use; plane %s cannot land until all runways are free",
-			ap.Serial, ap.Runway.noOfRunwayinUse, plane.Serial)
-	}
-
-	// 4. Mark a runway as in use for the landing.
-	// This will make `noOfRunwayinUse` equal to 1, effectively "locking" the
-	// entire airport's runway system as per the strict rule for landing.
-	ap.Runway.noOfRunwayinUse++
-
 	// 5. Simulate the physical landing duration.
 	// The lock is held during this time, preventing other takeoffs or landings
 	// from this airport (due to the strict rule and lock).
-	time.Sleep(LandingDuration)
 
 	// 6. Release the runway after the landing is complete.
 	ap.Runway.noOfRunwayinUse--
@@ -88,10 +101,13 @@ func (ap *Airport) Land(plane Plane, simState *SimulationState) error {
 	// 8. Update the plane's status to reflect it's no longer in flight.
 	plane.PlaneInFlight = false // Update the local copy
 
+	plane.FlightLog[len(plane.FlightLog)-1].FlightStatus = "landed"
+	plane.FlightLog[len(plane.FlightLog)-1].ActualLandingTime = time.Now()
+
 	// 9. Add the now-landed plane to the destination airport's list of parked planes.
 	ap.Planes = append(ap.Planes, plane) // Append the updated copy of the plane
 
-	fmt.Printf("Plane %s successfully landed at Airport %s (%s). It is now parked.\n",
+	log.Printf("Plane %s successfully landed at Airport %s (%s). It is now parked.\n\n",
 		plane.Serial, ap.Serial, ap.Location.String())
 
 	return nil

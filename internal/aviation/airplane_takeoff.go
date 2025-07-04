@@ -2,6 +2,7 @@ package aviation
 
 import (
 	"fmt"
+	"log"
 	"math/rand"
 	"time"
 
@@ -27,33 +28,42 @@ const TakeoffDuration = 5 * time.Second
 //
 //	*Flight: A pointer to the newly created Flight struct representing this takeoff.
 //	error: An error if the takeoff cannot be initiated (e.g., no available runways, plane not found).
-func (ap *Airport) TakeOff(plane Plane, simState *SimulationState) (*Flight, error) {
+func (airport *Airport) TakeOff(plane Plane, simState *SimulationState) (*Flight, error) {
+	for i := 0; airport.ReceivingPlane && simState.SimStatus; i++ {
+		log.Printf("\nairport %s is currently receiving a landing plane; plane %s cannot takeoff until all landing operations are over\n\n",
+			airport.Serial, plane.Serial)
+		time.Sleep(LandingDuration)
+	}
+
 	// Acquire a lock only for checking/updating runway count
-	ap.Mu.Lock()
+	airport.Mu.Lock()
 
 	// Check if there's an available runway.
-	if ap.Runway.noOfRunwayinUse >= ap.Runway.numberOfRunway {
-		ap.Mu.Unlock() // Release lock immediately if no runway
-		return nil, fmt.Errorf("airport %s has no available runways for takeoff (all %d in use)", ap.Serial, ap.Runway.numberOfRunway)
+	if airport.Runway.noOfRunwayinUse >= airport.Runway.numberOfRunway {
+		airport.Mu.Unlock() // Release lock immediately if no runway
+		log.Printf("\nairport %s has no available runways for takeoff (all %d of %d runway(s) in use)", airport.Serial, airport.Runway.noOfRunwayinUse, airport.Runway.numberOfRunway)
 	}
 
 	// Mark a runway as in use.
-	ap.Runway.noOfRunwayinUse++
-	ap.Mu.Unlock() // <<< IMPORTANT: Release the lock BEFORE the 3-second sleep
+	airport.Runway.noOfRunwayinUse++
+	airport.Mu.Unlock() // <<< IMPORTANT: Release the lock BEFORE the 3-second sleep
 
 	// Simulate the physical takeoff duration. This does NOT hold the lock.
 	// This allows other planes to acquire the lock and potentially start taking off
 	// on another available runway immediately.
+	log.Printf("Plane %s (Cruise Speed: %.2fm/s) about to takeoff from Airport %s %s\n\n",
+		plane.Serial, plane.CruiseSpeed, airport.Serial, airport.Location.String())
+
 	time.Sleep(TakeoffDuration)
 
 	// After the takeoff duration, re-acquire the lock to safely decrement the counter.
-	ap.Mu.Lock()
-	ap.Runway.noOfRunwayinUse--
-	ap.Mu.Unlock() // Release the lock after updating
+	airport.Mu.Lock()
+	airport.Runway.noOfRunwayinUse--
+	airport.Mu.Unlock() // Release the lock after updating
 
 	// Find and remove the plane from this airport's list of parked planes.
 	planeIndex := -1
-	for i, p := range ap.Planes {
+	for i, p := range airport.Planes {
 		if p.Serial == plane.Serial {
 			planeIndex = i
 			break
@@ -61,26 +71,26 @@ func (ap *Airport) TakeOff(plane Plane, simState *SimulationState) (*Flight, err
 	}
 
 	if planeIndex == -1 {
-		return nil, fmt.Errorf("plane %s not found at airport %s to initiate takeoff", plane.Serial, ap.Serial)
+		return nil, fmt.Errorf("plane %s not found at airport %s to initiate takeoff", plane.Serial, airport.Serial)
 	}
 
 	// Remove the plane from the airport's Planes slice.
-	ap.Planes = append(ap.Planes[:planeIndex], ap.Planes[planeIndex+1:]...)
+	airport.Planes = append(airport.Planes[:planeIndex], airport.Planes[planeIndex+1:]...)
 
 	// Select a random destination airport for the plane.
-	destinationAirport, err := ap.getRandomDestinationAirport(simState.Airports)
+	destinationAirport, err := airport.getRandomDestinationAirport(simState.Airports)
 	if err != nil {
 		return nil, fmt.Errorf("failed to select destination airport for plane %s: %w", plane.Serial, err)
 	}
 
 	// Define the flight path from the current airport to the destination.
 	flightPath := FlightPath{
-		Depature: ap.Location,
-		Arrival:  destinationAirport.Location,
+		Depature:    airport.Location,
+		Destination: destinationAirport.Location,
 	}
 
 	// Calculate the total distance and estimated flight duration.
-	flightDistance := Distance(flightPath.Depature, flightPath.Arrival)
+	flightDistance := Distance(flightPath.Depature, flightPath.Destination)
 	if plane.CruiseSpeed <= 0 {
 		return nil, fmt.Errorf("plane %s has an invalid cruise speed (%.2f), cannot calculate flight duration", plane.Serial, plane.CruiseSpeed)
 	}
@@ -92,11 +102,14 @@ func (ap *Airport) TakeOff(plane Plane, simState *SimulationState) (*Flight, err
 
 	// Create a new Flight record with all its details.
 	newFlight := Flight{
-		FlightID:         util.GenerateSerialNumber(len(plane.FlightLog), "f"), // Generate unique ID for this specific flight
-		FlightSchedule:   flightPath,
-		TakeoffTime:      takeoffTime,
-		LandingTime:      landingTime,
-		CruisingAltitude: CruisingAltitude,
+		FlightID:            plane.Serial + util.GenerateSerialNumber(len(plane.FlightLog), "f"), // Generate unique ID for this specific flight
+		FlightSchedule:      flightPath,
+		TakeoffTime:         takeoffTime,
+		ExpectedLandingTime: landingTime,
+		CruisingAltitude:    CruisingAltitude,
+		DepatureAirPort:     airport.Serial,
+		ArrivalAirPort:      destinationAirport.Serial,
+		FlightStatus:        "in transit",
 	}
 
 	// Update the plane's internal state to reflect it's now in flight.
@@ -106,18 +119,18 @@ func (ap *Airport) TakeOff(plane Plane, simState *SimulationState) (*Flight, err
 	// Add the updated plane to the global list of planes currently in flight.
 	simState.PlanesInFlight = append(simState.PlanesInFlight, plane)
 
-	fmt.Printf("Plane %s (Cruise Speed: %.2f) took off from Airport %s (%s), heading to Airport %s (%s). Estimated landing at %s.\n",
-		plane.Serial, plane.CruiseSpeed, ap.Serial, ap.Location.String(), destinationAirport.Serial, destinationAirport.Location.String(), landingTime.Format("15:04:05"))
+	log.Printf("Plane %s (Cruise Speed: %.2fm/s) took off from Airport %s %s, heading to Airport %s %s. Estimated landing at %s.\n\n",
+		plane.Serial, plane.CruiseSpeed, airport.Serial, airport.Location.String(), destinationAirport.Serial, destinationAirport.Location.String(), landingTime.Format("15:04:05"))
 
 	return &newFlight, nil
 }
 
 // getRandomDestinationAirport selects a random airport from the list of all airports
-// that is not the current airport (ap). This helps in simulating inter-airport travel.
-func (ap *Airport) getRandomDestinationAirport(allAirports []*Airport) (*Airport, error) {
+// that is not the current airport (airport). This helps in simulating inter-airport travel.
+func (airport *Airport) getRandomDestinationAirport(allAirports []*Airport) (*Airport, error) {
 	eligibleAirports := []*Airport{}
 	for _, otherAp := range allAirports {
-		if otherAp.Serial != ap.Serial { // A plane cannot fly to the airport it just took off from
+		if otherAp.Serial != airport.Serial { // A plane cannot fly to the airport it just took off from
 			eligibleAirports = append(eligibleAirports, otherAp)
 		}
 	}

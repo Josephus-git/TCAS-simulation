@@ -29,18 +29,18 @@ func createPlane(planeCount int) Plane {
 // getPlanePosition calculates the plane's interpolated coordinates (X, Y, Z) at a given time during a specific flight.
 // It returns an error if the provided time is outside the flight's duration.
 func (p Plane) getPlanePosition(f Flight, t time.Time) (Coordinate, error) {
-	if t.Before(f.TakeoffTime) || t.After(f.LandingTime) { //*** return here to check incase plane shold go on another Flight
+	if t.Before(f.TakeoffTime) || t.After(f.ExpectedLandingTime) { //*** return here to check incase plane shold go on another Flight
 		return Coordinate{}, fmt.Errorf("time %v is outside Flight %s duration", t, f.FlightID)
 	}
 
 	// Calculate fraction of Flight completed (normalized time 0-1)
-	totalDuration := f.LandingTime.Sub(f.TakeoffTime)
+	totalDuration := f.ExpectedLandingTime.Sub(f.TakeoffTime)
 	elapsed := t.Sub(f.TakeoffTime)
 	progress := float64(elapsed) / float64(totalDuration)
 
 	// get the arival and departure location
 	departureLocation := f.FlightSchedule.Depature
-	arivalLocation := f.FlightSchedule.Arrival
+	arivalLocation := f.FlightSchedule.Destination
 
 	// Calculate the intermediate point
 	pX := departureLocation.X + (departureLocation.X-arivalLocation.X)*progress
@@ -59,12 +59,12 @@ func Distance(p1, p2 Coordinate) float64 {
 func (f1 Flight) GetClosestApproachDetails(f2 Flight) (closestTime time.Time, distanceBetweenPlanesatCA float64) {
 	flight1ClosestCoord, flight2ClosestCoord := FindClosestApproachDuringTransit(f1.FlightSchedule, f2.FlightSchedule)
 
-	flight1Distance := Distance(f1.FlightSchedule.Depature, f1.FlightSchedule.Arrival)
+	flight1Distance := Distance(f1.FlightSchedule.Depature, f1.FlightSchedule.Destination)
 	distBtwDepatureAndClosestApproachForFlight1 := Distance(f1.FlightSchedule.Depature, flight1ClosestCoord)
 
 	f1fractionofCA := distBtwDepatureAndClosestApproachForFlight1 / flight1Distance
 
-	totalFlightDuration1 := f1.LandingTime.Sub(f1.TakeoffTime)
+	totalFlightDuration1 := f1.ExpectedLandingTime.Sub(f1.TakeoffTime)
 	closestTime = f1.TakeoffTime.Add(time.Duration(float64(totalFlightDuration1) * f1fractionofCA))
 
 	distanceBetweenPlanesatCA = Distance(flight1ClosestCoord, flight2ClosestCoord)

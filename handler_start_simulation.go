@@ -24,6 +24,9 @@ func startInit(simState *aviation.SimulationState, durationMinutesString string)
 		fmt.Println("Please input a valid integer greater than 0")
 		return
 	}
+	simState.SimStatus = true
+	simState.SimEndedTime = time.Time{}
+	simState.SimStatusChannel = make(chan struct{})
 	startSimulation(simState, time.Duration(durationMinutes))
 }
 
@@ -38,15 +41,25 @@ const AirportLaunchIntervalMax = 10 * time.Second
 // FlightMonitorInterval is how often the monitor checks planes for landing time
 const FlightMonitorInterval = 500 * time.Millisecond
 
+var FlightNumberCount int
+
 // simulationCancelFunc is a global variable to hold the cancel function for the simulation context,
 // this allows EmergencyStop to trigger cancellation of the simulation from anywhere
 var simulationCancelFunc context.CancelFunc
 
+// stopTrigger is a pointer to time.Timer, it is stopped during emergency stop
+var stopTrigger *time.Timer
+
 // startSimulationInit initializes and starts the TCAS simulation, managing goroutines for takeoffs and landings.
 // It sets up a context for graceful shutdown and waits for all simulation activities to complete.
 func startSimulation(simState *aviation.SimulationState, durationMinutes time.Duration) {
+	FlightNumberCount = 0
 	defer close(simState.SimStatusChannel) // Ensures SimStatuschannel is closed when startSimulation function exits
-	log.Printf("--- TCAS Simulation Started for %d minutes ---", durationMinutes)
+	defer func() { simState.SimStatus = false }()
+	defer func() { simState.SimEndedTime = time.Now() }()
+	defer func() { fmt.Print("\nTCAS-simulator > ") }()
+	log.Printf("\n--- TCAS Simulation Started for %d minutes ---", durationMinutes)
+	fmt.Printf("To initiate an emergency stop, type 'q' and press Enter.\n\n")
 
 	// WaitGroup to keep track of running goroutines
 	var wg sync.WaitGroup
@@ -60,12 +73,13 @@ func startSimulation(simState *aviation.SimulationState, durationMinutes time.Du
 
 	// Set a timer to automatically call cancel after the specified duration.
 	// This ensures the simulation stops even if EmergencyStop is not called.
-	time.AfterFunc(simulationDuration, func() {
-		log.Printf("\n--- Simulation Duration (%d minutes) Reached. Initiating shutdown... ---", durationMinutes)
+	stopTrigger = time.AfterFunc(simulationDuration, func() {
+		if simState.SimStatus {
+			log.Printf("\n--- Simulation Duration (%d minutes) Reached. Initiating shutdown... ---", durationMinutes)
+		}
 		if simulationCancelFunc != nil {
 			simulationCancelFunc() // Trigger cancellation
 		}
-
 	})
 
 	// Start the takeoff simulation (using your provided startSimulation function)
@@ -73,7 +87,8 @@ func startSimulation(simState *aviation.SimulationState, durationMinutes time.Du
 	startAirports(simState, ctx, &wg)
 
 	// --- Start Flight Monitoring Goroutine (for landings) ---
-	log.Printf("--- Starting Flight Landing Monitor ---")
+	log.Printf("--- Starting Flight Landing Monitor ---\n\n")
+
 	wg.Add(1) // Add for the monitor goroutine
 	go func(globalSimState *aviation.SimulationState, ctx context.Context) {
 		defer wg.Done()
@@ -110,7 +125,7 @@ func startSimulation(simState *aviation.SimulationState, durationMinutes time.Du
 				if len(p.FlightLog) > 0 {
 					currentFlight := p.FlightLog[len(p.FlightLog)-1]
 					// Check if current time is past or at the plane's scheduled landing time
-					if currentTime.After(currentFlight.LandingTime) || currentTime.Equal(currentFlight.LandingTime) {
+					if currentTime.After(currentFlight.ExpectedLandingTime) || currentTime.Equal(currentFlight.ExpectedLandingTime) {
 						planesToLand = append(planesToLand, p)
 					}
 				}
@@ -132,7 +147,7 @@ func startSimulation(simState *aviation.SimulationState, durationMinutes time.Du
 				for i := range globalSimState.Airports {
 					ap := globalSimState.Airports[i]
 					// Match airport by location, using Epsilon for robust float comparison
-					if aviation.Distance(ap.Location, currentFlight.FlightSchedule.Arrival) < aviation.Epsilon {
+					if aviation.Distance(ap.Location, currentFlight.FlightSchedule.Destination) < aviation.Epsilon {
 						destinationAirport = ap
 						break
 					}
@@ -148,7 +163,7 @@ func startSimulation(simState *aviation.SimulationState, durationMinutes time.Du
 						// and will be retried in the next monitor interval.
 					}
 				} else {
-					log.Printf("Monitor Error: Destination airport not found for plane %s (arrival coord: %s)", p.Serial, currentFlight.FlightSchedule.Arrival.String())
+					log.Printf("Monitor Error: Destination airport not found for plane %s (arrival coord: %s)", p.Serial, currentFlight.FlightSchedule.Destination.String())
 				}
 			}
 		}
@@ -185,7 +200,7 @@ func startAirports(simState *aviation.SimulationState, ctx context.Context, wg *
 			for {
 				select {
 				case <-ctx.Done(): // Check if the main simulation context is done
-					log.Printf("Airport %s stopping launch operations.", airport.Serial)
+					// stopping all airport launch operations
 					return // Exit goroutine
 				default:
 					// Continue operation
@@ -195,7 +210,7 @@ func startAirports(simState *aviation.SimulationState, ctx context.Context, wg *
 				select {
 				case <-time.After(sleepDuration):
 				case <-ctx.Done():
-					log.Printf("Airport %s stopping launch operations during sleep.", airport.Serial)
+					// stoping all airport launch operation during sleep
 					return
 				}
 

@@ -11,12 +11,13 @@ import (
 
 // Airport represents an Airport with its location
 type Airport struct {
-	Serial        string
-	Location      Coordinate
-	PlaneCapacity int
-	Runway        runway
-	Planes        []Plane
-	Mu            sync.Mutex
+	Serial             string
+	Location           Coordinate
+	InitialPlaneAmount int
+	Runway             runway
+	Planes             []Plane
+	Mu                 sync.Mutex
+	ReceivingPlane     bool
 }
 
 // runway represents the state of an airport's runways.
@@ -34,13 +35,13 @@ func InitializeAirports(conf *config.Config, simState *SimulationState) {
 	for i := 0; planesCreated < conf.NoOfAirplanes; i++ {
 		newAirport := createAirport(airportsCreated, planesCreated, conf.NoOfAirplanes)
 		planesGenerated := planesCreated
-		for range newAirport.PlaneCapacity {
+		for range newAirport.InitialPlaneAmount {
 			newPlane := createPlane(planesGenerated)
 			newAirport.Planes = append(newAirport.Planes, newPlane)
 			planesGenerated += 1
 		}
 		simState.Airports = append(simState.Airports, &newAirport)
-		planesCreated += newAirport.PlaneCapacity
+		planesCreated += newAirport.InitialPlaneAmount
 		airportsCreated = i + 1
 	}
 
@@ -59,9 +60,9 @@ func InitializeAirports(conf *config.Config, simState *SimulationState) {
 // It generates a serial number, plane capacity, and runway details for the airport.
 func createAirport(airportCount, planecount, totalNumPlanes int) Airport {
 	return Airport{
-		Serial:        util.GenerateSerialNumber(airportCount, "ap"),
-		PlaneCapacity: generatePlaneCapacity(totalNumPlanes, planecount),
-		Runway:        generateRunway(),
+		Serial:             util.GenerateSerialNumber(airportCount, "ap"),
+		InitialPlaneAmount: generatePlaneCapacity(totalNumPlanes, planecount),
+		Runway:             generateRunway(),
 	}
 }
 

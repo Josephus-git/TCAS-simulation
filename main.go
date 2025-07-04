@@ -19,20 +19,23 @@ func main() {
 func start() {
 	scanner := bufio.NewScanner(os.Stdin)
 	initialize := &config.Config{}
-	simState := &aviation.SimulationState{
-		SimStatusChannel: make(chan struct{}),
-	}
+	simState := &aviation.SimulationState{}
 
 	aviation.GetNumberOfPlanes(initialize)
 	aviation.InitializeAirports(initialize, simState)
 
-	for i := 0; ; i++ {
+	for {
 		fmt.Print("TCAS-simulator > ")
 		scanner.Scan()
 		input := util.CleanInput(scanner.Text())
 		argument2 := ""
 		if len(input) > 1 {
 			argument2 = input[1]
+		}
+
+		if len(input) == 0 {
+			fmt.Println("")
+			continue
 		}
 
 		cmd, ok := getCommand(simState, argument2)[input[0]]
