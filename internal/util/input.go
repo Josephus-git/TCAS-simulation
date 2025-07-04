@@ -23,6 +23,7 @@ func ResetLog() {
 		"logs/airportDetails.txt",
 		"logs/airplaneDetails.txt",
 		"logs/flightDetails.txt",
+		"logs/console_log.txt",
 	}
 
 	for _, filePath := range filesToDelete {

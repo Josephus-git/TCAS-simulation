@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"math/rand"
+	"os"
 	"strconv"
 	"sync"
 	"time"
@@ -15,6 +16,13 @@ import (
 // startInit parses the duration string and initializes the simulation,
 // handles input validation, ensuring a positive integer for simulation duration.
 func startInit(simState *aviation.SimulationState, durationMinutesString string) {
+	logFilePath := "logs/console_log.txt"
+	// Open the file in append mode. Create it if it doesn't exist.
+	f, err := os.OpenFile(logFilePath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+	if err != nil {
+		log.Fatalf("failed to open log file: %v", err)
+	}
+
 	durationMinutes, err := strconv.Atoi(durationMinutesString)
 	if err != nil {
 		fmt.Println("usage: start <integer> (integer represents time in minute(s))")
@@ -27,7 +35,7 @@ func startInit(simState *aviation.SimulationState, durationMinutesString string)
 	simState.SimStatus = true
 	simState.SimEndedTime = time.Time{}
 	simState.SimStatusChannel = make(chan struct{})
-	startSimulation(simState, time.Duration(durationMinutes))
+	startSimulation(simState, time.Duration(durationMinutes), f)
 }
 
 // Simulation parameters
@@ -52,13 +60,16 @@ var stopTrigger *time.Timer
 
 // startSimulationInit initializes and starts the TCAS simulation, managing goroutines for takeoffs and landings.
 // It sets up a context for graceful shutdown and waits for all simulation activities to complete.
-func startSimulation(simState *aviation.SimulationState, durationMinutes time.Duration) {
+func startSimulation(simState *aviation.SimulationState, durationMinutes time.Duration, f *os.File) {
 	FlightNumberCount = 0
 	defer close(simState.SimStatusChannel) // Ensures SimStatuschannel is closed when startSimulation function exits
 	defer func() { simState.SimStatus = false }()
 	defer func() { simState.SimEndedTime = time.Now() }()
 	defer func() { fmt.Print("\nTCAS-simulator > ") }()
+	defer func() { f.Close() }()
 	log.Printf("\n--- TCAS Simulation Started for %d minute(s) ---", durationMinutes)
+	fmt.Fprintf(f, "%s\n--- TCAS Simulation Started for %d minute(s) ---\n",
+		time.Now().Format("2006-01-02 15:04:05"), durationMinutes)
 	fmt.Printf("To initiate an emergency stop, type 'q' and press Enter.\n\n")
 
 	// WaitGroup to keep track of running goroutines
@@ -76,6 +87,8 @@ func startSimulation(simState *aviation.SimulationState, durationMinutes time.Du
 	stopTrigger = time.AfterFunc(simulationDuration, func() {
 		if simState.SimStatus {
 			log.Printf("\n--- Simulation Duration (%d minutes) Reached. Initiating shutdown... ---", durationMinutes)
+			fmt.Fprintf(f, "%s\n--- Simulation Duration (%d minutes) Reached. Initiating shutdown... ---\n",
+				time.Now().Format("2006-01-02 15:04:05"), durationMinutes)
 		}
 		if simulationCancelFunc != nil {
 			simulationCancelFunc() // Trigger cancellation
@@ -84,10 +97,12 @@ func startSimulation(simState *aviation.SimulationState, durationMinutes time.Du
 
 	// Start the takeoff simulation (using your provided startSimulation function)
 	// Pass ctx and wg to startSimulation so airport goroutines can respect shutdown
-	startAirports(simState, ctx, &wg)
+	startAirports(simState, ctx, &wg, f)
 
 	// --- Start Flight Monitoring Goroutine (for landings) ---
 	log.Printf("--- Starting Flight Landing Monitor ---\n\n")
+	fmt.Fprintf(f, "%s--- Starting Flight Landing Monitor ---, \n\n",
+		time.Now().Format("2006-01-02 15:04:05"))
 
 	wg.Add(1) // Add for the monitor goroutine
 	go func(globalSimState *aviation.SimulationState, ctx context.Context) {
@@ -97,6 +112,8 @@ func startSimulation(simState *aviation.SimulationState, durationMinutes time.Du
 			select {
 			case <-ctx.Done(): // Check if the main simulation context is done
 				log.Printf("Flight monitor stopping.")
+				fmt.Fprintf(f, "%sFlight monitor stopping .\n",
+					time.Now().Format("2006-01-02 15:04:05"))
 				return // Exit goroutine
 			default:
 				// Continue monitoring
@@ -108,6 +125,8 @@ func startSimulation(simState *aviation.SimulationState, durationMinutes time.Du
 			case <-ctx.Done():
 				// This case executes if the context (ctx) is cancelled.
 				log.Printf("Flight monitor stopping during sleep.")
+				fmt.Fprintf(f, "%sFlight monitor stopping during sleep.\n",
+					time.Now().Format("2006-01-02 15:04:05"))
 				return // Exits the goroutine immediately.
 			}
 
@@ -137,6 +156,8 @@ func startSimulation(simState *aviation.SimulationState, durationMinutes time.Du
 				select {
 				case <-ctx.Done():
 					log.Printf("Flight monitor stopping while processing planes.")
+					fmt.Fprintf(f, "%sFlight monitor stopping while processing planes.\n",
+						time.Now().Format("2006-01-02 15:04:05"))
 					return
 				default:
 				}
@@ -157,13 +178,16 @@ func startSimulation(simState *aviation.SimulationState, durationMinutes time.Du
 					// Call the Land function. It handles its own internal locking for runway use
 					// and updates globalSimState.PlanesInFlight by removing the landed plane.
 					// The Land function itself acquires the necessary simState.Mu lock for its modification.
-					err := destinationAirport.Land(p, globalSimState)
+					err := destinationAirport.Land(p, globalSimState, f)
 					if err != nil {
 						// This error could be due to runway busy. The plane remains in PlanesInFlight
 						// and will be retried in the next monitor interval.
 					}
 				} else {
-					log.Printf("Monitor Error: Destination airport not found for plane %s (arrival coord: %s)", p.Serial, currentFlight.FlightSchedule.Destination.String())
+					log.Printf("Monitor Error: Destination airport not found for plane %s (arrival coord: %s)\n",
+						p.Serial, currentFlight.FlightSchedule.Destination.String())
+					fmt.Fprintf(f, "%sMonitor Error: Destination airport not found for plane %s (arrival coord: %s)\n",
+						time.Now().Format("2006-01-02 15:04:05"), p.Serial, currentFlight.FlightSchedule.Destination.String())
 				}
 			}
 		}
@@ -173,23 +197,35 @@ func startSimulation(simState *aviation.SimulationState, durationMinutes time.Du
 	wg.Wait()
 
 	log.Printf("\n--- All simulation goroutines have stopped. ---")
+	fmt.Fprintf(f, "%s\n--- All simulation goroutines have stopped. ---\n",
+		time.Now().Format("2006-01-02 15:04:05"))
 	log.Printf("Final Simulation State Summary:")
+	fmt.Fprintf(f, "%sFinal Simulation State Summary:\n",
+		time.Now().Format("2006-01-02 15:04:05"))
 	simState.Mu.Lock() // Acquire lock to safely read final count of planes in flight
 	log.Printf("  Planes currently in flight: %d", len(simState.PlanesInFlight))
+	fmt.Fprintf(f, "%s  Planes currently in flight: %d\n",
+		time.Now().Format("2006-01-02 15:04:05"), len(simState.PlanesInFlight))
 	simState.Mu.Unlock()
 
 	for i := range simState.Airports {
 		ap := simState.Airports[i]
 		ap.Mu.Lock() // Acquire lock for each airport to safely read its parked planes count
 		log.Printf("  Airport %s has %d planes parked.", ap.Serial, len(ap.Planes))
+		fmt.Fprintf(f, "%s  Airport %s has %d planes parked.\n",
+			time.Now().Format("2006-01-02 15:04:05"), ap.Serial, len(ap.Planes))
 		ap.Mu.Unlock()
 	}
 	log.Printf("--- TCAS Simulation Ended ---")
+	fmt.Fprintf(f, "%s--- TCAS Simulation Ended ---\n",
+		time.Now().Format("2006-01-02 15:04:05"))
 }
 
 // startAirports launches goroutines for each airport to handle takeoffs.
-func startAirports(simState *aviation.SimulationState, ctx context.Context, wg *sync.WaitGroup) {
+func startAirports(simState *aviation.SimulationState, ctx context.Context, wg *sync.WaitGroup, f *os.File) {
 	log.Printf("--- Starting Airport Launch Operations ---")
+	fmt.Fprintf(f, "%s--- Starting Airport Launch Operations ---\n",
+		time.Now().Format("2006-01-02 15:04:05"))
 	for i := range simState.Airports {
 		ap := simState.Airports[i] // Get a pointer to the airport
 		wg.Add(1)                  // Add to WaitGroup for each airport goroutine
@@ -220,7 +256,7 @@ func startAirports(simState *aviation.SimulationState, ctx context.Context, wg *
 					airport.Mu.Unlock()                 // Unlock airport before calling TakeOff
 
 					// IMPORTANT: Pass the global simState here.
-					_, err := airport.TakeOff(planeToTakeOff, simState) // Pass the simState from main
+					_, err := airport.TakeOff(planeToTakeOff, simState, f) // Pass the simState from main
 					if err != nil {
 						// log.Printf("error taking off from %s: %v", airport.Serial, err)
 					}

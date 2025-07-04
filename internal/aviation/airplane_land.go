@@ -3,6 +3,7 @@ package aviation
 import (
 	"fmt"
 	"log"
+	"os"
 	"time"
 )
 
@@ -28,19 +29,25 @@ const Epsilon = 0.1 // meters, adjust as needed for precision of coordinates
 //
 //	error: An error if the landing cannot proceed (e.g., wrong destination,
 //	       runways are currently in use, or the plane is not found in flight).
-func (ap *Airport) Land(plane Plane, simState *SimulationState) error {
+func (ap *Airport) Land(plane Plane, simState *SimulationState, f *os.File) error {
 	log.Printf("Plane %s is attempting to land at Airport %s (%s).\n\n",
 		plane.Serial, ap.Serial, ap.Location.String())
+	fmt.Fprintf(f, "%s Plane %s is attempting to land at Airport %s (%s).\n\n",
+		time.Now().Format("2006-01-02 15:04:05"), plane.Serial, ap.Serial, ap.Location.String())
 
 	// first we run a loop to make sure a plane is not trying to land in an airport where
 	// another airplane is trying to take off
 	for i := 0; ap.Runway.noOfRunwayinUse > 0 && simState.SimStatus; i++ {
 		log.Printf("\nairport %s has %d runway(s) currently in use; plane %s cannot land until all runways are free\n\n",
 			ap.Serial, ap.Runway.noOfRunwayinUse, plane.Serial)
+		fmt.Fprintf(f, "%s\nairport %s has %d runway(s) currently in use; plane %s cannot land until all runways are free\n\n",
+			time.Now().Format("2006-01-02 15:04:05"), ap.Serial, ap.Runway.noOfRunwayinUse, plane.Serial)
 		time.Sleep(TakeoffDuration)
 	}
 	log.Printf("Plane %s is now landing at Airport %s (%s).\n\n",
 		plane.Serial, ap.Serial, ap.Location.String())
+	fmt.Fprintf(f, "%sPlane %s is now landing at Airport %s (%s).\n\n",
+		time.Now().Format("2006-01-02 15:04:05"), plane.Serial, ap.Serial, ap.Location.String())
 
 	// Mark a runway as in use for the landing.
 	// This lock the runway so no plane can take off for the landing duration
@@ -109,6 +116,8 @@ func (ap *Airport) Land(plane Plane, simState *SimulationState) error {
 
 	log.Printf("Plane %s successfully landed at Airport %s (%s). It is now parked.\n\n",
 		plane.Serial, ap.Serial, ap.Location.String())
+	fmt.Fprintf(f, "%sPlane %s successfully landed at Airport %s (%s). It is now parked.\n\n",
+		time.Now().Format("2006-01-02 15:04:05"), plane.Serial, ap.Serial, ap.Location.String())
 
 	return nil
 }
