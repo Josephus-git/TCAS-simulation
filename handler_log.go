@@ -109,6 +109,13 @@ func logAirplanesDetails(simState *aviation.SimulationState) {
 		fmt.Fprintf(f, "Plane %d (Serial: %s):\n", i+1, plane.Serial)
 		fmt.Fprintf(f, "  In Flight: %t\n", plane.PlaneInFlight)
 		fmt.Fprintf(f, "  Cruise Speed: %.2f m/s\n", plane.CruiseSpeed)
+		fmt.Fprintf(f, "  TCAS Capability: %s\n", func(capability aviation.TCASCapability) string {
+			if capability == 1 {
+				return "Working Perfectly"
+			} else {
+				return "Faulty"
+			}
+		}(plane.TCASCapability))
 		fmt.Fprintln(f, "  Flight Log:")
 		if len(plane.FlightLog) == 0 {
 			fmt.Fprintln(f, "    No flights recorded for this plane.")
@@ -189,6 +196,7 @@ func logFlightDetails(flight aviation.Flight, simTime time.Time, f *os.File) {
 	fmt.Fprintln(f, "    ---------------------------------------")
 }
 
+// logEngagementDetails writes the detailed information of a TCASEngagement to the provided file.
 func logEngagementDetails(engagement aviation.TCASEngagement, f *os.File) {
 	fmt.Fprintln(f, "    --- Engagement Details ---")
 	fmt.Fprintf(f, "    Engagement ID: %s\n", engagement.EngagementID)

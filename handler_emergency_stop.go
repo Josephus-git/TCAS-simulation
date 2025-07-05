@@ -6,6 +6,7 @@ import (
 	"github.com/josephus-git/TCAS-simulation/internal/aviation"
 )
 
+// emergencyStop immediately halts the simulation, canceling all active goroutines and resetting the simulation state.
 func emergencyStop(simState *aviation.SimulationState) {
 	if simulationCancelFunc != nil {
 		log.Println("\n--- EMERGENCY STOP ACTIVATED! Signaling all goroutines to stop... ---")

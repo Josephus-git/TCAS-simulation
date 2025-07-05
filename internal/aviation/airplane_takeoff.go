@@ -10,7 +10,7 @@ import (
 	"github.com/josephus-git/TCAS-simulation/internal/util"
 )
 
-// CruisingAltitude defines the standard cruising altitude for planes in meters.
+// CruisingAltitudes defines 3 cruising altitude for planes in meters.
 var CruisingAltitudes = [3]float64{10000.0, 10200.0, 10400.0}
 
 // TakeoffDuration defines how long a takeoff operation physically lasts.
@@ -42,8 +42,6 @@ func (airport *Airport) TakeOff(plane Plane, simState *SimulationState, f, tcasL
 			time.Now().Format("2006-01-02 15:04:05"), airport.Serial, plane.Serial)
 		time.Sleep(LandingDuration)
 	}
-
-	// Acquire a lock only for checking/updating runway count
 
 	for {
 		// Check if there's an available runway.

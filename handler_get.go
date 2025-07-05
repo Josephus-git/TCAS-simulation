@@ -90,6 +90,13 @@ func getAirPlanesDetails(simState *aviation.SimulationState) {
 		fmt.Printf("Plane %d (Serial: %s):\n", i+1, plane.Serial)
 		fmt.Printf("  In Flight: %t\n", plane.PlaneInFlight)
 		fmt.Printf("  Cruise Speed: %.2f m/s\n", plane.CruiseSpeed)
+		fmt.Printf("  TCAS Capability: %s\n", func(capability aviation.TCASCapability) string {
+			if capability == 1 {
+				return "Working Perfectly"
+			} else {
+				return "Faulty"
+			}
+		}(plane.TCASCapability))
 		fmt.Println("  Flight Log:")
 		if len(plane.FlightLog) == 0 {
 			fmt.Println("    No flights recorded for this plane.")
@@ -163,6 +170,7 @@ func printFlightDetails(flight aviation.Flight, simTime time.Time) {
 	fmt.Println("    ---------------------------------------")
 }
 
+// printEngagementDetails displays the detailed information of a TCASEngagement, including IDs, serial numbers, time, and crash potential.
 func printEngagementDetails(engagement aviation.TCASEngagement) {
 	fmt.Println("    --- Engagement Details ---")
 	fmt.Printf("    Engagement ID: %s\n", engagement.EngagementID)

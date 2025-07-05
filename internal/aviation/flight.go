@@ -5,8 +5,7 @@ import (
 	"time"
 )
 
-// Flight represents a single f from departure to arrival
-
+// Flight represents a single flight from departure to arrival
 type Flight struct {
 	FlightID               string
 	FlightSchedule         FlightPath

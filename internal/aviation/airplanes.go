@@ -23,7 +23,7 @@ type Plane struct {
 }
 
 const (
-	TCASPerfect TCASCapability = iota //<<<< Check here again
+	TCASPerfect TCASCapability = iota // 0
 	TCASFaulty
 )
 
@@ -31,7 +31,7 @@ const (
 func createPlane(planeCount int) Plane {
 	// Randomly assign TCAS capability
 	capability := TCASPerfect
-	if rand.Float64() < 0.5 { // 50% chance of faulty TCAS
+	if rand.Float64() < 0.25 { // 25% chance of faulty TCAS
 		capability = TCASFaulty
 	}
 

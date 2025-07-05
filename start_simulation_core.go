@@ -14,7 +14,7 @@ import (
 // Simulation parameters
 
 // AirportLaunchIntervalMin is the min random delay before an airport tries to launch a plane
-const AirportLaunchIntervalMin = 5 * time.Second
+const AirportLaunchIntervalMin = 1 * time.Second
 
 // AirportLaunchIntervalMax is the max random delay before an airport tries to launch a plane
 const AirportLaunchIntervalMax = 60 * time.Second
@@ -240,7 +240,9 @@ func startSimulation(simState *aviation.SimulationState, durationMinutes time.Du
 								time.Now().Format("2006-01-02 15:04:05"), tcasEngagement.plane.Serial, otherPlane.Serial)
 
 							// at this point, the simulation ends
-							emergencyStop(simState)
+							if simState.SimIsRunning {
+								emergencyStop(simState)
+							}
 
 						})
 					} else {
