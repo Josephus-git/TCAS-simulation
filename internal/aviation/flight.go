@@ -8,15 +8,15 @@ import (
 // Flight represents a single f from departure to arrival
 
 type Flight struct {
-	FlightID            string
-	FlightSchedule      FlightPath
-	TakeoffTime         time.Time
-	ExpectedLandingTime time.Time
-	CruisingAltitude    float64 // Meters
-	DepatureAirPort     string
-	ArrivalAirPort      string
-	FlightStatus        string
-	ActualLandingTime   time.Time
+	FlightID               string
+	FlightSchedule         FlightPath
+	TakeoffTime            time.Time
+	DestinationArrivalTime time.Time
+	CruisingAltitude       float64 // Meters
+	DepatureAirPort        string
+	ArrivalAirPort         string
+	FlightStatus           string
+	ActualLandingTime      time.Time
 }
 
 // FlightPath to store the movement of plane from one location to the other
@@ -28,12 +28,12 @@ type FlightPath struct {
 // GetFlightProgress calculates Progress made by plane in transit
 func (f Flight) GetFlightProgress(simTime time.Time) string {
 
-	if simTime.After(f.ExpectedLandingTime) && f.FlightStatus == "landed" {
+	if simTime.After(f.DestinationArrivalTime) && f.FlightStatus == "landed" {
 		return "100% (Landed)"
-	} else if simTime.After(f.ExpectedLandingTime) && f.FlightStatus == "about to land" {
+	} else if simTime.After(f.DestinationArrivalTime) && f.FlightStatus == "about to land" {
 		return "100% (About to land)"
-	} else if simTime.After(f.TakeoffTime) && simTime.Before(f.ExpectedLandingTime) {
-		totalDuration := f.ExpectedLandingTime.Sub(f.TakeoffTime)
+	} else if simTime.After(f.TakeoffTime) && simTime.Before(f.DestinationArrivalTime) {
+		totalDuration := f.DestinationArrivalTime.Sub(f.TakeoffTime)
 		elapsedDuration := simTime.Sub(f.TakeoffTime)
 
 		// Ensure totalDuration is not zero to prevent division by zero

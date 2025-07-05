@@ -1,11 +1,9 @@
 package aviation
 
 import (
-	"fmt"
 	"math/rand"
 	"sync"
 
-	"github.com/josephus-git/TCAS-simulation/internal/config"
 	"github.com/josephus-git/TCAS-simulation/internal/util"
 )
 
@@ -24,36 +22,6 @@ type Airport struct {
 type runway struct {
 	numberOfRunway  int
 	noOfRunwayinUse int
-}
-
-// InitializeAirports creates appropriate amount of airports and airplanes
-func InitializeAirports(conf *config.Config, simState *SimulationState) {
-
-	planesCreated := 0
-	airportsCreated := 0
-
-	for i := 0; planesCreated < conf.NoOfAirplanes; i++ {
-		newAirport := createAirport(airportsCreated, planesCreated, conf.NoOfAirplanes)
-		planesGenerated := planesCreated
-		for range newAirport.InitialPlaneAmount {
-			newPlane := createPlane(planesGenerated)
-			newAirport.Planes = append(newAirport.Planes, newPlane)
-			planesGenerated += 1
-		}
-		simState.Airports = append(simState.Airports, &newAirport)
-		planesCreated += newAirport.InitialPlaneAmount
-		airportsCreated = i + 1
-	}
-
-	listOfAirportCoordinates := generateCoordinates(len(simState.Airports))
-
-	for i := range simState.Airports {
-		newLocation := Coordinate{listOfAirportCoordinates[i].X, listOfAirportCoordinates[i].Y, 0.0}
-		simState.Airports[i].Location = newLocation
-	}
-
-	fmt.Printf("\nInitialized: %d airports, %d planes distributed among airports.\n\n",
-		len(simState.Airports), conf.NoOfAirplanes)
 }
 
 // createAirport initializes and returns a new Airport struct.

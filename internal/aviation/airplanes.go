@@ -1,53 +1,47 @@
 package aviation
 
 import (
-	"fmt"
 	"math"
+	"math/rand"
 	"time"
 
 	"github.com/josephus-git/TCAS-simulation/internal/util"
 )
 
+// TCASCapability defines the type of TCAS system installed on a plane
+type TCASCapability int
+
 // Plane represents an aircraft with its key operational details and flight history.
 type Plane struct {
-	Serial        string
-	PlaneInFlight bool
-	CruiseSpeed   float64
-	FlightLog     []Flight
+	Serial                 string
+	PlaneInFlight          bool
+	CruiseSpeed            float64
+	FlightLog              []Flight
+	TCASCapability         TCASCapability
+	TCASEngagementRecords  []TCASEngagement
+	CurrentTCASEngagements []TCASEngagement
 }
+
+const (
+	TCASPerfect TCASCapability = iota //<<<< Check here again
+	TCASFaulty
+)
 
 // createPlane initializes and returns a new Plane struct with a generated serial number.
 func createPlane(planeCount int) Plane {
+	// Randomly assign TCAS capability
+	capability := TCASPerfect
+	if rand.Float64() < 0.5 { // 50% chance of faulty TCAS
+		capability = TCASFaulty
+	}
+
 	return Plane{
-		Serial:        util.GenerateSerialNumber(planeCount, "p"),
-		PlaneInFlight: false,
-		CruiseSpeed:   5,
-		FlightLog:     []Flight{},
+		Serial:         util.GenerateSerialNumber(planeCount, "p"),
+		PlaneInFlight:  false,
+		CruiseSpeed:    5,
+		FlightLog:      []Flight{},
+		TCASCapability: capability,
 	}
-}
-
-// getPlanePosition calculates the plane's interpolated coordinates (X, Y, Z) at a given time during a specific flight.
-// It returns an error if the provided time is outside the flight's duration.
-func (p Plane) getPlanePosition(f Flight, t time.Time) (Coordinate, error) {
-	if t.Before(f.TakeoffTime) || t.After(f.ExpectedLandingTime) { //*** return here to check incase plane shold go on another Flight
-		return Coordinate{}, fmt.Errorf("time %v is outside Flight %s duration", t, f.FlightID)
-	}
-
-	// Calculate fraction of Flight completed (normalized time 0-1)
-	totalDuration := f.ExpectedLandingTime.Sub(f.TakeoffTime)
-	elapsed := t.Sub(f.TakeoffTime)
-	progress := float64(elapsed) / float64(totalDuration)
-
-	// get the arival and departure location
-	departureLocation := f.FlightSchedule.Depature
-	arivalLocation := f.FlightSchedule.Destination
-
-	// Calculate the intermediate point
-	pX := departureLocation.X + (departureLocation.X-arivalLocation.X)*progress
-	pY := departureLocation.Y + (departureLocation.Y-arivalLocation.Y)*progress
-	pZ := f.CruisingAltitude
-
-	return Coordinate{X: pX, Y: pY, Z: pZ}, nil
 }
 
 // Distance calculates the Euclidean Distance between two 3D coordinates.
@@ -64,7 +58,7 @@ func (f1 Flight) GetClosestApproachDetails(f2 Flight) (closestTime time.Time, di
 
 	f1fractionofCA := distBtwDepatureAndClosestApproachForFlight1 / flight1Distance
 
-	totalFlightDuration1 := f1.ExpectedLandingTime.Sub(f1.TakeoffTime)
+	totalFlightDuration1 := f1.DestinationArrivalTime.Sub(f1.TakeoffTime)
 	closestTime = f1.TakeoffTime.Add(time.Duration(float64(totalFlightDuration1) * f1fractionofCA))
 
 	distanceBetweenPlanesatCA = Distance(flight1ClosestCoord, flight2ClosestCoord)

@@ -11,7 +11,7 @@ import (
 )
 
 // CruisingAltitude defines the standard cruising altitude for planes in meters.
-const CruisingAltitude = 10000.0
+var CruisingAltitudes = [3]float64{10000.0, 10200.0, 10400.0}
 
 // TakeoffDuration defines how long a takeoff operation physically lasts.
 const TakeoffDuration = 5 * time.Second
@@ -29,13 +29,13 @@ const TakeoffDuration = 5 * time.Second
 //
 //	*Flight: A pointer to the newly created Flight struct representing this takeoff.
 //	error: An error if the takeoff cannot be initiated (e.g., no available runways, plane not found).
-func (airport *Airport) TakeOff(plane Plane, simState *SimulationState, f *os.File) (*Flight, error) {
+func (airport *Airport) TakeOff(plane Plane, simState *SimulationState, f, tcasLog *os.File) (*Flight, error) {
 	log.Printf("Plane %s (Cruise Speed: %.2fm/s) is attempting to takeoff from Airport %s %s\n\n",
 		plane.Serial, plane.CruiseSpeed, airport.Serial, airport.Location.String())
 	fmt.Fprintf(f, "%s Plane %s (Cruise Speed: %.2fm/s) is attempting to takeoff from Airport %s %s\n\n",
 		time.Now().Format("2006-01-02 15:04:05"), plane.Serial, plane.CruiseSpeed, airport.Serial, airport.Location.String())
 
-	for i := 0; airport.ReceivingPlane && simState.SimStatus; i++ {
+	for i := 0; airport.ReceivingPlane && simState.SimIsRunning; i++ {
 		log.Printf("\nairport %s is currently receiving a landing plane; plane %s cannot takeoff until all landing operations are over\n\n",
 			airport.Serial, plane.Serial)
 		fmt.Fprintf(f, "%s \nairport %s is currently receiving a landing plane; plane %s cannot takeoff until all landing operations are over\n\n",
@@ -118,23 +118,37 @@ func (airport *Airport) TakeOff(plane Plane, simState *SimulationState, f *os.Fi
 
 	takeoffTime := time.Now()
 	landingTime := takeoffTime.Add(flightDuration)
+	var cruisingAltitude float64
+	if simState.DifferentAltitudes {
+		chance := rand.Float64()
+		if chance < 0.33 {
+			cruisingAltitude = CruisingAltitudes[0]
+		} else if chance < 0.66 {
+			cruisingAltitude = CruisingAltitudes[1]
+		} else {
+			cruisingAltitude = CruisingAltitudes[2]
+		}
+	} else {
+		cruisingAltitude = CruisingAltitudes[0]
+	}
 
 	// Create a new Flight record with all its details.
 	newFlight := Flight{
-		FlightID:            plane.Serial + util.GenerateSerialNumber(len(plane.FlightLog), "f"), // Generate unique ID for this specific flight
-		FlightSchedule:      flightPath,
-		TakeoffTime:         takeoffTime,
-		ExpectedLandingTime: landingTime,
-		CruisingAltitude:    CruisingAltitude,
-		DepatureAirPort:     airport.Serial,
-		ArrivalAirPort:      destinationAirport.Serial,
-		FlightStatus:        "in transit",
+		FlightID:               plane.Serial + util.GenerateSerialNumber(len(plane.FlightLog), "f"), // Generate unique ID for this specific flight
+		FlightSchedule:         flightPath,
+		TakeoffTime:            takeoffTime,
+		DestinationArrivalTime: landingTime,
+		CruisingAltitude:       cruisingAltitude,
+		DepatureAirPort:        airport.Serial,
+		ArrivalAirPort:         destinationAirport.Serial,
+		FlightStatus:           "in transit",
 	}
 
 	// Update the plane's internal state to reflect it's now in flight.
 	plane.PlaneInFlight = true
 	plane.FlightLog = append(plane.FlightLog, newFlight)
-
+	tcasEngagements := plane.tcas(simState, tcasLog)
+	plane.CurrentTCASEngagements = tcasEngagements
 	// Add the updated plane to the global list of planes currently in flight.
 	simState.PlanesInFlight = append(simState.PlanesInFlight, plane)
 

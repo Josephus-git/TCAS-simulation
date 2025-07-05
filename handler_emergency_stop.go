@@ -12,11 +12,9 @@ func emergencyStop(simState *aviation.SimulationState) {
 		simulationCancelFunc() // Trigger cancellation
 		// Reset the cancel func to indicate no active simulation,
 		// and prevent multiple calls to a potentially nil context if Start() finished.
-		simState.SimStatus = false
+		simState.SimIsRunning = false
 		<-simState.SimStatusChannel
 		if stopTrigger.Stop() {
-		} else {
-			log.Printf("Simulation has ended a while ago")
 		}
 		simulationCancelFunc = nil
 

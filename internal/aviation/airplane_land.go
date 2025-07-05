@@ -37,7 +37,7 @@ func (ap *Airport) Land(plane Plane, simState *SimulationState, f *os.File) erro
 
 	// first we run a loop to make sure a plane is not trying to land in an airport where
 	// another airplane is trying to take off
-	for i := 0; ap.Runway.noOfRunwayinUse > 0 && simState.SimStatus; i++ {
+	for i := 0; ap.Runway.noOfRunwayinUse > 0 && simState.SimIsRunning; i++ {
 		log.Printf("\nairport %s has %d runway(s) currently in use; plane %s cannot land until all runways are free\n\n",
 			ap.Serial, ap.Runway.noOfRunwayinUse, plane.Serial)
 		fmt.Fprintf(f, "%s\nairport %s has %d runway(s) currently in use; plane %s cannot land until all runways are free\n\n",
@@ -107,6 +107,7 @@ func (ap *Airport) Land(plane Plane, simState *SimulationState, f *os.File) erro
 
 	// 8. Update the plane's status to reflect it's no longer in flight.
 	plane.PlaneInFlight = false // Update the local copy
+	plane.CurrentTCASEngagements = []TCASEngagement{}
 
 	plane.FlightLog[len(plane.FlightLog)-1].FlightStatus = "landed"
 	plane.FlightLog[len(plane.FlightLog)-1].ActualLandingTime = time.Now()

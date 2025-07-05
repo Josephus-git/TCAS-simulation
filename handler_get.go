@@ -30,7 +30,7 @@ func getDetails(simState *aviation.SimulationState, argument2 string) {
 // getAirPlanesDetails prints selected details of all flights logged in all various planes
 func getFlightDetails(simState *aviation.SimulationState) {
 	var simTime time.Time
-	if simState.SimStatus {
+	if simState.SimIsRunning {
 		simTime = time.Now()
 	} else {
 		simTime = simState.SimEndedTime
@@ -69,7 +69,7 @@ func getFlightDetails(simState *aviation.SimulationState) {
 // getAirPlanesDetails prints selected details of all airplanes from the simulation state to the console.
 func getAirPlanesDetails(simState *aviation.SimulationState) {
 	var simTime time.Time
-	if simState.SimStatus {
+	if simState.SimIsRunning {
 		simTime = time.Now()
 	} else {
 		simTime = simState.SimEndedTime
@@ -96,6 +96,22 @@ func getAirPlanesDetails(simState *aviation.SimulationState) {
 		} else {
 			for _, flight := range plane.FlightLog { // Looping to count flights, but not printing content if 'flight' is empty
 				printFlightDetails(flight, simTime)
+			}
+		}
+		if len(plane.TCASEngagementRecords) == 0 {
+			fmt.Println("    No Past TCAS engagement recorded for this plane.")
+		} else {
+			for _, engagement := range plane.TCASEngagementRecords {
+				fmt.Println("    --- Past Engagement Details ---")
+				printEngagementDetails(engagement)
+			}
+		}
+		if len(plane.CurrentTCASEngagements) == 0 {
+			fmt.Println("    No Expected TCAS engagement recorded for this plane.")
+		} else {
+			for _, engagement := range plane.CurrentTCASEngagements {
+				fmt.Println("    --- Expected Engagement Details ---")
+				printEngagementDetails(engagement)
 			}
 		}
 		fmt.Println("-------------------------------------------")
@@ -128,7 +144,7 @@ func printFlightDetails(flight aviation.Flight, simTime time.Time) {
 	fmt.Println("    --- Flight Details ---")
 	fmt.Printf("    Flight ID: %s\n", flight.FlightID)
 	fmt.Printf("    Takeoff Time: %s\n", flight.TakeoffTime.Format("15:04:05"))
-	fmt.Printf("    Expected Landing Time: %s\n", flight.ExpectedLandingTime.Format("15:04:05"))
+	fmt.Printf("    Destination Arrival Time: %s\n", flight.DestinationArrivalTime.Format("15:04:05"))
 	fmt.Printf("    Cruising Altitude: %.2f meters\n", flight.CruisingAltitude)
 	fmt.Printf("    Depature Airport: %s\n", flight.DepatureAirPort)
 	fmt.Printf("    Destination Airport: %s\n", flight.ArrivalAirPort)
@@ -145,4 +161,20 @@ func printFlightDetails(flight aviation.Flight, simTime time.Time) {
 
 	fmt.Printf("    Progress: %s\n", progress)
 	fmt.Println("    ---------------------------------------")
+}
+
+func printEngagementDetails(engagement aviation.TCASEngagement) {
+	fmt.Println("    --- Engagement Details ---")
+	fmt.Printf("    Engagement ID: %s\n", engagement.EngagementID)
+	fmt.Printf("    Flight ID: %s\n", engagement.FlightID)
+	fmt.Printf("    Plane Serial: %s\n", engagement.PlaneSerial)
+	fmt.Printf("    Other Plane Serial: %s\n", engagement.OtherPlaneSerial)
+	fmt.Printf("    Time Of Engagement: %s\n", engagement.TimeOfEngagement.Format("15:04:05"))
+	fmt.Printf("    Will Crash: %s\n", func(willCrash bool) string {
+		if engagement.WillCrash {
+			return "yes"
+		} else {
+			return "no"
+		}
+	}(engagement.WillCrash))
 }

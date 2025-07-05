@@ -173,14 +173,14 @@ func TestGetClosestApproachDetails(t *testing.T) {
 		{
 			name: "Sceaviation.Fario 1: Direct Intersection (Mid-flight)",
 			flight1: Flight{
-				FlightSchedule:      FlightPath{Depature: Coordinate{0, 0, 0}, Destination: Coordinate{100, 0, 0}},
-				TakeoffTime:         baseTime,
-				ExpectedLandingTime: baseTime.Add(10 * time.Minute),
+				FlightSchedule:         FlightPath{Depature: Coordinate{0, 0, 0}, Destination: Coordinate{100, 0, 0}},
+				TakeoffTime:            baseTime,
+				DestinationArrivalTime: baseTime.Add(10 * time.Minute),
 			},
 			flight2: Flight{
-				FlightSchedule:      FlightPath{Depature: Coordinate{50, -50, 0}, Destination: Coordinate{50, 50, 0}},
-				TakeoffTime:         baseTime,
-				ExpectedLandingTime: baseTime.Add(10 * time.Minute),
+				FlightSchedule:         FlightPath{Depature: Coordinate{50, -50, 0}, Destination: Coordinate{50, 50, 0}},
+				TakeoffTime:            baseTime,
+				DestinationArrivalTime: baseTime.Add(10 * time.Minute),
 			},
 			expectedClosestTime:             baseTime.Add(5 * time.Minute),
 			expectedDistanceBetweenPlanesCA: 0.0,
@@ -188,14 +188,14 @@ func TestGetClosestApproachDetails(t *testing.T) {
 		{
 			name: "Scenario 2: Parallel Paths (Constant Distance)",
 			flight1: Flight{
-				FlightSchedule:      FlightPath{Depature: Coordinate{0, 0, 0}, Destination: Coordinate{100, 0, 0}},
-				TakeoffTime:         baseTime,
-				ExpectedLandingTime: baseTime.Add(10 * time.Minute),
+				FlightSchedule:         FlightPath{Depature: Coordinate{0, 0, 0}, Destination: Coordinate{100, 0, 0}},
+				TakeoffTime:            baseTime,
+				DestinationArrivalTime: baseTime.Add(10 * time.Minute),
 			},
 			flight2: Flight{
-				FlightSchedule:      FlightPath{Depature: Coordinate{0, 10, 0}, Destination: Coordinate{100, 10, 0}},
-				TakeoffTime:         baseTime,
-				ExpectedLandingTime: baseTime.Add(10 * time.Minute),
+				FlightSchedule:         FlightPath{Depature: Coordinate{0, 10, 0}, Destination: Coordinate{100, 10, 0}},
+				TakeoffTime:            baseTime,
+				DestinationArrivalTime: baseTime.Add(10 * time.Minute),
 			},
 			expectedClosestTime:             baseTime.Add(0 * time.Minute),
 			expectedDistanceBetweenPlanesCA: 10.0,
@@ -203,14 +203,14 @@ func TestGetClosestApproachDetails(t *testing.T) {
 		{
 			name: "Scenario 3: Closest Approach at Departure (Flight 1 starts near Flight 2)",
 			flight1: Flight{
-				FlightSchedule:      FlightPath{Depature: Coordinate{0, 0, 0}, Destination: Coordinate{100, 0, 0}},
-				TakeoffTime:         baseTime,
-				ExpectedLandingTime: baseTime.Add(10 * time.Minute),
+				FlightSchedule:         FlightPath{Depature: Coordinate{0, 0, 0}, Destination: Coordinate{100, 0, 0}},
+				TakeoffTime:            baseTime,
+				DestinationArrivalTime: baseTime.Add(10 * time.Minute),
 			},
 			flight2: Flight{
-				FlightSchedule:      FlightPath{Depature: Coordinate{5, 0, 0}, Destination: Coordinate{101, 0, 0}},
-				TakeoffTime:         baseTime,
-				ExpectedLandingTime: baseTime.Add(10 * time.Minute),
+				FlightSchedule:         FlightPath{Depature: Coordinate{5, 0, 0}, Destination: Coordinate{101, 0, 0}},
+				TakeoffTime:            baseTime,
+				DestinationArrivalTime: baseTime.Add(10 * time.Minute),
 			},
 			expectedClosestTime:             baseTime.Add(30 * time.Second),
 			expectedDistanceBetweenPlanesCA: 0.0,
@@ -218,14 +218,14 @@ func TestGetClosestApproachDetails(t *testing.T) {
 		{
 			name: "Scenario 4: Closest Approach at Destination (Flight 1 ends near Flight 2)",
 			flight1: Flight{
-				FlightSchedule:      FlightPath{Depature: Coordinate{0, 0, 0}, Destination: Coordinate{100, 0, 0}},
-				TakeoffTime:         baseTime,
-				ExpectedLandingTime: baseTime.Add(10 * time.Minute),
+				FlightSchedule:         FlightPath{Depature: Coordinate{0, 0, 0}, Destination: Coordinate{100, 0, 0}},
+				TakeoffTime:            baseTime,
+				DestinationArrivalTime: baseTime.Add(10 * time.Minute),
 			},
 			flight2: Flight{
-				FlightSchedule:      FlightPath{Depature: Coordinate{-100, 0, 0}, Destination: Coordinate{0, 0, 0}},
-				TakeoffTime:         baseTime,
-				ExpectedLandingTime: baseTime.Add(10 * time.Minute),
+				FlightSchedule:         FlightPath{Depature: Coordinate{-100, 0, 0}, Destination: Coordinate{0, 0, 0}},
+				TakeoffTime:            baseTime,
+				DestinationArrivalTime: baseTime.Add(10 * time.Minute),
 			},
 			expectedClosestTime:             baseTime.Add(0 * time.Minute),
 			expectedDistanceBetweenPlanesCA: 100.0, // distance between (100,0,0) and (0,0,0)
@@ -233,14 +233,14 @@ func TestGetClosestApproachDetails(t *testing.T) {
 		{
 			name: "Scenario 5: Different Start Times, Same Intersection Point Geometrically",
 			flight1: Flight{
-				FlightSchedule:      FlightPath{Depature: Coordinate{0, 0, 0}, Destination: Coordinate{100, 0, 0}},
-				TakeoffTime:         baseTime,
-				ExpectedLandingTime: baseTime.Add(10 * time.Minute),
+				FlightSchedule:         FlightPath{Depature: Coordinate{0, 0, 0}, Destination: Coordinate{100, 0, 0}},
+				TakeoffTime:            baseTime,
+				DestinationArrivalTime: baseTime.Add(10 * time.Minute),
 			},
 			flight2: Flight{
-				FlightSchedule:      FlightPath{Depature: Coordinate{50, -50, 0}, Destination: Coordinate{50, 50, 0}},
-				TakeoffTime:         baseTime.Add(2 * time.Minute),
-				ExpectedLandingTime: baseTime.Add(12 * time.Minute),
+				FlightSchedule:         FlightPath{Depature: Coordinate{50, -50, 0}, Destination: Coordinate{50, 50, 0}},
+				TakeoffTime:            baseTime.Add(2 * time.Minute),
+				DestinationArrivalTime: baseTime.Add(12 * time.Minute),
 			},
 			expectedClosestTime:             baseTime.Add(5 * time.Minute),
 			expectedDistanceBetweenPlanesCA: 0.0,
@@ -248,14 +248,14 @@ func TestGetClosestApproachDetails(t *testing.T) {
 		{
 			name: "Scenario 7: Closest Approach Asymmetric (Near Start F1, Near End F2)",
 			flight1: Flight{
-				FlightSchedule:      FlightPath{Depature: Coordinate{0, 0, 0}, Destination: Coordinate{100, 0, 0}},
-				TakeoffTime:         baseTime,
-				ExpectedLandingTime: baseTime.Add(10 * time.Minute),
+				FlightSchedule:         FlightPath{Depature: Coordinate{0, 0, 0}, Destination: Coordinate{100, 0, 0}},
+				TakeoffTime:            baseTime,
+				DestinationArrivalTime: baseTime.Add(10 * time.Minute),
 			},
 			flight2: Flight{
-				FlightSchedule:      FlightPath{Depature: Coordinate{0, 100, 0}, Destination: Coordinate{100, 100, 0}},
-				TakeoffTime:         baseTime,
-				ExpectedLandingTime: baseTime.Add(10 * time.Minute),
+				FlightSchedule:         FlightPath{Depature: Coordinate{0, 100, 0}, Destination: Coordinate{100, 100, 0}},
+				TakeoffTime:            baseTime,
+				DestinationArrivalTime: baseTime.Add(10 * time.Minute),
 			},
 			expectedClosestTime:             baseTime,
 			expectedDistanceBetweenPlanesCA: 100.0,

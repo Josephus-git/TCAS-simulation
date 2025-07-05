@@ -40,7 +40,7 @@ func logFlightDetailsToFile(simState *aviation.SimulationState) {
 	defer f.Close()
 
 	var simTime time.Time
-	if simState.SimStatus {
+	if simState.SimIsRunning {
 		simTime = time.Now()
 	} else {
 		simTime = simState.SimEndedTime
@@ -88,7 +88,7 @@ func logAirplanesDetails(simState *aviation.SimulationState) {
 	defer f.Close()
 
 	var simTime time.Time
-	if simState.SimStatus {
+	if simState.SimIsRunning {
 		simTime = time.Now()
 	} else {
 		simTime = simState.SimEndedTime
@@ -115,6 +115,20 @@ func logAirplanesDetails(simState *aviation.SimulationState) {
 		} else {
 			for _, flight := range plane.FlightLog { // Looping to count flights, but not printing content if 'flight' is empty
 				logFlightDetails(flight, simTime, f)
+			}
+		}
+		if len(plane.TCASEngagementRecords) == 0 {
+			fmt.Fprintln(f, "    No TCAS engagement recorded for this plane.")
+		} else {
+			for _, engagement := range plane.TCASEngagementRecords {
+				logEngagementDetails(engagement, f)
+			}
+		}
+		if len(plane.CurrentTCASEngagements) == 0 {
+			fmt.Fprintln(f, "    No current TCAS engagement recorded for this plane.")
+		} else {
+			for _, engagement := range plane.CurrentTCASEngagements {
+				logEngagementDetails(engagement, f)
 			}
 		}
 		fmt.Fprintln(f, "-------------------------------------------")
@@ -156,7 +170,7 @@ func logFlightDetails(flight aviation.Flight, simTime time.Time, f *os.File) {
 	fmt.Fprintln(f, "    --- Flight Details ---")
 	fmt.Fprintf(f, "    Flight ID: %s\n", flight.FlightID)
 	fmt.Fprintf(f, "    Takeoff Time: %s\n", flight.TakeoffTime.Format("15:04:05"))
-	fmt.Fprintf(f, "    Expected Landing Time: %s\n", flight.ExpectedLandingTime.Format("15:04:05"))
+	fmt.Fprintf(f, "    Destination Arrival Time: %s\n", flight.DestinationArrivalTime.Format("15:04:05"))
 	fmt.Fprintf(f, "    Cruising Altitude: %.2f meters\n", flight.CruisingAltitude)
 	fmt.Fprintf(f, "    Depature Airport: %s\n", flight.DepatureAirPort)
 	fmt.Fprintf(f, "    Destination Airport: %s\n", flight.ArrivalAirPort)
@@ -173,4 +187,20 @@ func logFlightDetails(flight aviation.Flight, simTime time.Time, f *os.File) {
 
 	fmt.Fprintf(f, "    Progress: %s\n", progress)
 	fmt.Fprintln(f, "    ---------------------------------------")
+}
+
+func logEngagementDetails(engagement aviation.TCASEngagement, f *os.File) {
+	fmt.Fprintln(f, "    --- Engagement Details ---")
+	fmt.Fprintf(f, "    Engagement ID: %s\n", engagement.EngagementID)
+	fmt.Fprintf(f, "    Flight ID: %s\n", engagement.FlightID)
+	fmt.Fprintf(f, "    Plane Serial: %s\n", engagement.PlaneSerial)
+	fmt.Fprintf(f, "    Other Plane Serial: %s\n", engagement.OtherPlaneSerial)
+	fmt.Fprintf(f, "    Time Of Engagement: %s\n", engagement.TimeOfEngagement.Format("15:04:05"))
+	fmt.Fprintf(f, "    Will Crash: %s\n", func(willCrash bool) string {
+		if engagement.WillCrash {
+			return "yes"
+		} else {
+			return "no"
+		}
+	}(engagement.WillCrash))
 }

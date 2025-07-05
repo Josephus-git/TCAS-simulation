@@ -7,6 +7,7 @@ import (
 
 func resetAll(cfg *config.Config) {
 	cfg.IsRunning = false
+	cfg.DifferentAltitudes = false
 }
 
 func restartApplication() {

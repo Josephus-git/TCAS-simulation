@@ -16,12 +16,13 @@ import (
 
 // SimulationState holds the collection of live domain objects and their current state
 type SimulationState struct {
-	Airports         []*Airport
-	PlanesInFlight   []Plane
-	Mu               sync.Mutex
-	SimStatusChannel chan struct{}
-	SimStatus        bool
-	SimEndedTime     time.Time
+	Airports           []*Airport
+	PlanesInFlight     []Plane
+	Mu                 sync.Mutex
+	SimStatusChannel   chan struct{}
+	DifferentAltitudes bool
+	SimIsRunning       bool
+	SimEndedTime       time.Time
 }
 
 // GetNumberOfPlanes prompts the user to input the desired number of planes for the simulation.
@@ -53,7 +54,58 @@ func GetNumberOfPlanes(conf *config.Config) {
 		conf.NoOfAirplanes = num
 		notValidInput = false
 	}
+	notValidInput = true
+	for i := 0; notValidInput; i++ {
+		fmt.Print("Varying Cruise Altitudes (y/n) > ")
+		scanner.Scan()
+		input := util.CleanInput(scanner.Text())
+		if len(input) == 0 {
+			fmt.Println("")
+			continue
+		}
 
+		if input[0] != "y" && input[0] != "n" {
+			fmt.Println("Please input a 'y' or 'n'")
+			continue
+		}
+
+		if input[0] == "y" {
+			conf.DifferentAltitudes = true
+		}
+		notValidInput = false
+	}
+
+}
+
+// InitializeAirports creates appropriate amount of airports and airplanes
+func InitializeAirports(conf *config.Config, simState *SimulationState) {
+	simState.DifferentAltitudes = conf.DifferentAltitudes
+
+	planesCreated := 0
+	airportsCreated := 0
+
+	for i := 0; planesCreated < conf.NoOfAirplanes; i++ {
+		newAirport := createAirport(airportsCreated, planesCreated, conf.NoOfAirplanes)
+		planesGenerated := planesCreated
+		for range newAirport.InitialPlaneAmount {
+			newPlane := createPlane(planesGenerated)
+			newAirport.Planes = append(newAirport.Planes, newPlane)
+			planesGenerated += 1
+		}
+		simState.Airports = append(simState.Airports, &newAirport)
+		planesCreated += newAirport.InitialPlaneAmount
+		airportsCreated = i + 1
+	}
+
+	listOfAirportCoordinates := generateCoordinates(len(simState.Airports))
+
+	for i := range simState.Airports {
+		newLocation := Coordinate{listOfAirportCoordinates[i].X, listOfAirportCoordinates[i].Y, 0.0}
+		simState.Airports[i].Location = newLocation
+	}
+
+	fmt.Printf("\nInitialized: %d airports, %d planes distributed among airports.\n\n",
+		len(simState.Airports), conf.NoOfAirplanes)
 }
 
 // Point represents a 2D coordinate with X and Y components.

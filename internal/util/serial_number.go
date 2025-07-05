@@ -20,6 +20,8 @@ func GenerateSerialNumber(count int, paramType string) string {
 		serialNumber = fmt.Sprintf("AP_%s%s", letter, formatedNumericPart)
 	case "f":
 		serialNumber = fmt.Sprintf("F_%s%s", letter, formatedNumericPart)
+	case "e":
+		serialNumber = fmt.Sprintf("E_%s%s", letter, formatedNumericPart)
 	}
 
 	return serialNumber
